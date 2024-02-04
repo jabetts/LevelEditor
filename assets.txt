@@ -1,0 +1,57 @@
+Texture KnightIdle assets/Heroes/Knight/Idle/Idle-Sheet.png
+Texture KnightRun assets/Heroes/Knight/Run/Run-Sheet.png
+Texture OrcIdle assets/Enemy/OrcCrew/Orc/Idle/Idle-Sheet.png
+Texture Basalt assets/Tiles/basalt.png
+Texture MegamanStand assets/MegamanStand.png
+Texture MegamanRun assets/MegamanRun.png
+Texture Ground assets/Ground.png
+Texture Brick assets/Brick.png
+Texture Block assets/Block.png
+Texture QuestionFull assets/QuestionFull.png
+Texture QuestionEmpty assets/QuestionEmpty.png
+Texture MegamanJump assets/MegamanJump.png
+Texture Coin assets/Coin.png
+Texture PipeLeft assets/PipeLeft.png
+Texture PipeLeftTop assets/PipeLeftTop.png
+Texture PipeRight assets/PipeRight.png
+Texture PipeRightTop assets/PipeRightTop.png
+Texture DecHillLarge assets/DecHillLarge.png
+Texture DecBushLeft assets/DecBushLeft.png
+Texture DecBushMid assets/DecBushMid.png
+Texture DecBushRight assets/DecBushRight.png
+Texture DecHillSmall assets/DecHillSmall.png
+Texture DecBrickSmall assets/DecBrickSmall.png
+Texture Explosion assets/Explosion.png
+Texture DecCoin assets/DecCoin.png
+Texture GoombaAlive assets/GoombaAlive.png
+Texture Bullet assets/Bullet.png
+Font Hack assets/hack.ttf
+Font Mario assets/mario.ttf
+Animation MegamanStand MegamanStand 3 60
+Animation MegamanRun MegamanRun 3 8
+Animation MegamanJump MegamanJump 1 0
+Animation KnightRun KnightRun 6 20
+Animation KnightIdle KnightIdle 4 60
+Animation OrcIdle OrcIdle 4 60
+Animation Basalt Basalt 1 0
+Animation Ground Ground 1 0
+Animation Brick Brick 1 0
+Animation Block Block 1 0
+Animation QuestionFull QuestionFull 3 30
+Animation QuestionEmpty QuestionEmpty 1 0
+Animation Coin CoinSpin 2 15
+Animation PipeLeft PipeLeft 1 0
+Animation PipeLeftTop PipeLeftTop 1 0
+Animation PipeRight PipeRight 1 0
+Animation PipeRightTop PipeRightTop 1 0
+Animation DecHillLarge DecHillLarge 1 0
+Animation DecBushLeft DecBushLeft 1 0
+Animation DecBushMid DecBushMid 1 0
+Animation DecBushRight DecBushRight 1 0
+Animation DecHillSmall DecHillSmall 1 0
+Animation DecCoin DecCoin 2 5
+Animation DecBrickSmall DecBrickSmall 1 0
+Animation Explosion Explosion 12 5
+Animation BrickSpecial Brick 1 0
+Animation GoombaAlive GoombaAlive 2 20
+Animation Bullet Bullet 1 0
