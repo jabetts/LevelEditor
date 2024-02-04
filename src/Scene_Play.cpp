@@ -30,6 +30,8 @@ void Scene_Play::init(const std::string& levelPath)
     registerAction(sf::Keyboard::D,      "RIGHT");
     registerAction(sf::Keyboard::S,      "DOWN");
     registerAction(sf::Keyboard::Space,  "SHOOT");
+
+    registerAction(sf::Keyboard::BackSpace, "SAVE");
     
     m_gridText.setCharacterSize(12);
     m_gridText.setFont(m_game->assets().getFont("Hack"));
@@ -70,7 +72,6 @@ void Scene_Play::loadLevel(const std::string& filename)
     }
 
     std::cout << "Loading level\n";
-    //std::string in;
     std::string line;
     
     while (std::getline(f, line))
@@ -106,6 +107,8 @@ void Scene_Play::loadLevel(const std::string& filename)
             t->addComponent<CTransform>(gridToMidPixel(X, Y, t));
 
         }
+        // TODO: for the level editor, this will just be for for players starting position
+        //       their gravity etc.
         else if (in == "Player")
         {
             iss >> m_playerConfig.X >> m_playerConfig.Y >> m_playerConfig.CW
@@ -120,14 +123,51 @@ void Scene_Play::loadLevel(const std::string& filename)
     std::cout << "Level loaded in: " << time << " milliseconds\n";
 }
 
+void Scene_Play::saveLevel(const std::string& filename)
+{
+    sf::Clock clock;
+
+    std::ofstream f(filename);
+    if (!f.is_open())
+    {
+        std::cerr << "Unable to open file.\n";
+        exit(1);
+    }
+
+    std::string line;
+
+    f << "# Tile data" << std::endl;
+
+    for (auto& e : m_entityManager.getEntities("Tile"))
+    {
+        Vec2 gridPos = pixelToMidGrid(e->getComponent<CTransform>().pos.x, e->getComponent<CTransform>().pos.y, e);
+        f << "Tile" << " " << e->getComponent<CAnimation>().animation.getName() << " "
+            << gridPos.x << " " << gridPos.y << std::endl;
+    }
+
+    f.close();
+    std::cout << "file saved";
+
+}
+
 Vec2 Scene_Play::gridToMidPixel(float gridX, float gridY, std::shared_ptr<Entity> entity)
 { 
     auto size = entity->getComponent<CAnimation>().animation.getSprite().getOrigin();
     float pixelX = (gridX * (float)m_gridSize.x) + size.x;
-    float pixelY = height() - (gridY * m_gridSize.y) - size.y; // However we need to flip this as tile positions for y are reversed.
-
+    float pixelY = height() - (gridY * m_gridSize.y) - size.y;
 
     return Vec2(pixelX, pixelY);
+}
+
+// Returns the grid co-ordinate of a sprite origin.
+Vec2 Scene_Play::pixelToMidGrid(float x, float y, std::shared_ptr<Entity> entity)
+{
+    auto size = entity->getComponent<CAnimation>().animation.getSprite().getOrigin();
+    y = height() - y;
+    float gridX = x / m_gridSize.x;
+    float gridY = y / m_gridSize.y;
+
+    return Vec2(std::floor(gridX), std::floor(gridY));
 }
 
 Vec2 Scene_Play::windowToWorld(const Vec2& window) const
@@ -147,17 +187,7 @@ void Scene_Play::spawnPlayer()
 
 void Scene_Play::spawnBullet(std::shared_ptr<Entity> entity)
 {
-    // Only 2 bullets can be active at a time
-    auto t = m_entityManager.getEntities("Bullet");
-    if (t.size() > 1) return;
 
-    auto b = m_entityManager.addEntity("Bullet");
-    b->addComponent<CAnimation>(m_game->assets().getAnimation("Bullet"), true);
-    b->addComponent<CLifeSpan>(30, m_currentFrame);
-    b->addComponent<CTransform>().pos = entity->getComponent<CTransform>().pos;
-    b->addComponent<CBoundingBox>(m_game->assets().getAnimation("Bullet").getSize());
-    float direction = entity->getComponent<CAnimation>().animation.getSprite().getScale().x;
-    b->getComponent<CTransform>().velocity.x = entity->getComponent<CTransform>().velocity.x + (15 * direction);
 }
 
 void Scene_Play::update()
@@ -207,17 +237,7 @@ void Scene_Play::sMovement()
 
 void Scene_Play::sLifeSpan()
 {
-    for (auto& e : m_entityManager.getEntities())
-    {
-        if (e->hasComponent<CLifeSpan>())
-        {
-            e->getComponent<CLifeSpan>().lifespan--;
-            if (e->getComponent<CLifeSpan>().lifespan <= 0)
-            {
-                e->destroy();
-            }
-        }
-    }
+
 }
 
 void Scene_Play::sCollision()
@@ -237,6 +257,7 @@ void Scene_Play::sDoAction(const Action& action)
         else if (action.name() == "QUIT") { onEnd(); }
         else if (action.name() == "COLLISIONS") { m_collisions = !m_collisions; }
         else if (action.name() == "DEBUG") { m_debugFlag = !m_debugFlag; }
+        else if (action.name() == "SAVE") { saveLevel("level2.txt"); }
 
         // mouse actions
         else if (action.name() == "LEFT_CLICK")
@@ -264,6 +285,10 @@ void Scene_Play::sDoAction(const Action& action)
         {
             m_mPos = action.pos();
             Vec2 worldPos = windowToWorld(m_mPos);
+        }
+        else if (action.name() == "RIGHT")
+        {
+
         }
 
     }
@@ -381,6 +406,7 @@ void Scene_Play::sRender()
     m_currentFrame++;
 }
 
+
 void Scene_Play::sDebug()
 {
 }
@@ -392,9 +418,8 @@ void Scene_Play::sDrag()
         if (e->hasComponent<CDraggable>() && e->getComponent<CDraggable>().dragging)
         {
             Vec2 worldPos = windowToWorld(m_mPos);
-            e->getComponent<CTransform>().pos = worldPos;
-            std::cout << "Dragging: " << e->getComponent<CAnimation>().animation.getName() 
-                << " [" << m_mPos.x << "][" << m_mPos.y <<"]" << std::endl;
+            Vec2 gridPos = pixelToMidGrid(worldPos.x, worldPos.y, e);
+            e->getComponent<CTransform>().pos = gridToMidPixel(gridPos.x, gridPos.y, e);
         }
     }
 }

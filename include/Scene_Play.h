@@ -1,11 +1,9 @@
 #pragma once
 
-
 #include <map>
 #include <memory>
 #include "Scene.h"
 #include "EntityManager.h"
-
 
 class Scene_Play : public Scene
 {
@@ -26,6 +24,7 @@ protected:
 	bool						m_collisions = true;
 	bool						m_debugFlag = false;
 	bool						m_losFlag = false;
+	bool						m_gridSnap = true;
 	Vec2						m_gridSize = {64, 64};
 	sf::Text					m_gridText;
 	sf::Text                    m_debugText;
@@ -35,6 +34,7 @@ protected:
 
 	void init(const std::string& levelPath);
 	void loadLevel(const std::string& filename);
+	void saveLevel(const std::string& filename);
 
 	void sAnimation();
 	void sMovement();
@@ -44,6 +44,7 @@ protected:
 	void sDebug();
 	void sDrag();
 	Vec2 gridToMidPixel(float gridX, float gridY, std::shared_ptr<Entity> entity);
+	Vec2 pixelToMidGrid(float x, float y, std::shared_ptr<Entity> entity);
 	Vec2 windowToWorld(const Vec2& window) const;
 
 	void spawnPlayer();
@@ -51,7 +52,6 @@ protected:
 	void drawLine(sf::Vector2f v1, sf::Vector2f v2);
 
 	float width() const;
-
 	float height() const;
 
 public:
