@@ -2,6 +2,7 @@
 
 #include <map>
 #include <memory>
+#include <algorithm>
 #include "Scene.h"
 #include "EntityManager.h"
 
@@ -25,6 +26,8 @@ protected:
 	bool						m_debugFlag = false;
 	bool						m_losFlag = false;
 	bool						m_gridSnap = true;
+	int							m_xScroll = 0;
+	int							m_scrollStep = 10;
 	Vec2						m_gridSize = {64, 64};
 	sf::Text					m_gridText;
 	sf::Text                    m_debugText;

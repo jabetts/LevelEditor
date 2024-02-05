@@ -53,13 +53,6 @@ bool IsInside(Vec2 pos, std::shared_ptr<Entity> e)
 
 void Scene_Play::loadLevel(const std::string& filename)
 {
-    // TODO: read in the level file and add the appropriate entities
-    //       use the PlayerConfig struct m_playerConfig to store player properties
-    //       this struct is defined at the top of Scene_Play.h
-
-    // NOTE: all of the code below is sample code which shows you how to
-    //       set up and use entities with the new syntax, it should be removed
-
     sf::Clock clock;
     // rest the entity manager every time we load a level
     m_entityManager = EntityManager();
@@ -136,7 +129,7 @@ void Scene_Play::saveLevel(const std::string& filename)
 
     std::string line;
 
-    f << "# Tile data" << std::endl;
+    f << "##### Tile data #####" << std::endl;
 
     for (auto& e : m_entityManager.getEntities("Tile"))
     {
@@ -145,8 +138,17 @@ void Scene_Play::saveLevel(const std::string& filename)
             << gridPos.x << " " << gridPos.y << std::endl;
     }
 
+    f << "##### Decoration data #####" << std::endl;
+
+    for (auto& e : m_entityManager.getEntities("Dec"))
+    {
+        Vec2 gridPos = pixelToMidGrid(e->getComponent<CTransform>().pos.x, e->getComponent<CTransform>().pos.y, e);
+        f << "Dec" << " " << e->getComponent<CAnimation>().animation.getName() << " "
+            << gridPos.x << " " << gridPos.y << std::endl;
+    }
+
     f.close();
-    std::cout << "file saved";
+    std::cout << "file saved\n";
 
 }
 
@@ -327,6 +329,27 @@ void Scene_Play::sRender()
     // TODO: color the background darker so you know that the game is paused
     if (!m_paused) { m_game->window().clear(sf::Color(148, 148, 255)); }
     else { m_game->window().clear(sf::Color(148, 148, 255)); }
+
+    sf::View view = m_game->window().getView();
+
+    float mouseAcc = (m_mPos.x - 100) / 50.0;
+
+    if (m_mPos.x > m_game->window().getSize().x - 100)
+    {
+        m_xScroll += mouseAcc;
+        view.setCenter(m_xScroll, m_game->window().getSize().y - view.getCenter().y);
+        m_game->window().setView(view);
+    }
+    else if (m_mPos.x < 100)
+    {
+        // TODO: Fix this
+        m_xScroll -= m_scrollStep;
+        //m_xScroll += (m_mPos.x - m_game->window().getSize().x / 2.0f);
+        view.setCenter(m_xScroll, m_game->window().getSize().y - view.getCenter().y);
+        m_game->window().setView(view);
+    }
+    
+    std::cout << "mouseAcc: " << mouseAcc << std::endl;
 
     // draw all Entity textures / animations
     if (m_drawTextures)
