@@ -3,6 +3,7 @@
 #include <map>
 #include <memory>
 #include <algorithm>
+#include "Camera.h"
 #include "Scene.h"
 #include "EntityManager.h"
 
@@ -34,6 +35,9 @@ protected:
 	std::string                 m_debugString;
 	Vec2						m_mPos;
 	sf::CircleShape             m_shape;
+	Camera						m_camera;
+
+
 
 	void init(const std::string& levelPath);
 	void loadLevel(const std::string& filename);

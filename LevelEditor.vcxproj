@@ -152,6 +152,7 @@
     <ClCompile Include="src\Action.cpp" />
     <ClCompile Include="src\Animation.cpp" />
     <ClCompile Include="src\Assets.cpp" />
+    <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\Entity.cpp" />
     <ClCompile Include="src\EntityManager.cpp" />
     <ClCompile Include="src\GameEngine.cpp" />
@@ -165,6 +166,7 @@
     <ClInclude Include="include\Action.h" />
     <ClInclude Include="include\Animation.h" />
     <ClInclude Include="include\Assets.h" />
+    <ClInclude Include="include\Camera.h" />
     <ClInclude Include="include\components.h" />
     <ClInclude Include="include\Entity.h" />
     <ClInclude Include="include\EntityManager.h" />

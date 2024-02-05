@@ -12,6 +12,7 @@
 Scene_Play::Scene_Play(GameEngine* gameEngine, const std::string& levelPath)
     : Scene(gameEngine), m_levelPath(levelPath)
 {
+    
     init(m_levelPath);
 }
 
@@ -36,6 +37,10 @@ void Scene_Play::init(const std::string& levelPath)
     m_gridText.setCharacterSize(12);
     m_gridText.setFont(m_game->assets().getFont("Hack"));
     m_debugText.setFont(m_game->assets().getFont("Hack"));
+
+    m_camera.init(m_game->window().getView(), &m_game->window(), { width() / 2, height() / 2 });
+
+    m_xScroll = width() / 2;
 
     loadLevel(levelPath);
 }
@@ -260,7 +265,15 @@ void Scene_Play::sDoAction(const Action& action)
         else if (action.name() == "COLLISIONS") { m_collisions = !m_collisions; }
         else if (action.name() == "DEBUG") { m_debugFlag = !m_debugFlag; }
         else if (action.name() == "SAVE") { saveLevel("level2.txt"); }
-
+        else if (action.name() == "RIGHT")
+        {
+            m_xScroll += m_scrollStep;
+            std::cout << "m_xScroll: " << m_xScroll << "\n";
+        }
+        else if (action.name() == "LEFT")
+        {
+            m_xScroll -= m_scrollStep;
+        }
         // mouse actions
         else if (action.name() == "LEFT_CLICK")
         {
@@ -287,17 +300,19 @@ void Scene_Play::sDoAction(const Action& action)
         {
             m_mPos = action.pos();
             Vec2 worldPos = windowToWorld(m_mPos);
-        }
-        else if (action.name() == "RIGHT")
-        {
-
-        }
-
+        }   
     }
 
     if (action.type() == "END")
     {
-       
+        if (action.name() == "LEFT")
+        {
+          
+        }
+        else if (action.name() == "RIGHT")
+        {
+         
+        }
     }
 }
 
@@ -326,31 +341,13 @@ void Scene_Play::onEnd()
 
 void Scene_Play::sRender()
 {
-    // TODO: color the background darker so you know that the game is paused
-    if (!m_paused) { m_game->window().clear(sf::Color(148, 148, 255)); }
-    else { m_game->window().clear(sf::Color(148, 148, 255)); }
-
-    sf::View view = m_game->window().getView();
-
-    float mouseAcc = (m_mPos.x - 100) / 50.0;
-
-    if (m_mPos.x > m_game->window().getSize().x - 100)
-    {
-        m_xScroll += mouseAcc;
-        view.setCenter(m_xScroll, m_game->window().getSize().y - view.getCenter().y);
-        m_game->window().setView(view);
-    }
-    else if (m_mPos.x < 100)
-    {
-        // TODO: Fix this
-        m_xScroll -= m_scrollStep;
-        //m_xScroll += (m_mPos.x - m_game->window().getSize().x / 2.0f);
-        view.setCenter(m_xScroll, m_game->window().getSize().y - view.getCenter().y);
-        m_game->window().setView(view);
-    }
+    m_game->window().clear(sf::Color(148, 148, 255));
     
-    std::cout << "mouseAcc: " << mouseAcc << std::endl;
+    Vec2 camPos(m_xScroll, height() / 2);
 
+    m_camera.setPos(camPos);
+    m_camera.update();
+    
     // draw all Entity textures / animations
     if (m_drawTextures)
     {
