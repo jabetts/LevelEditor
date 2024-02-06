@@ -18,6 +18,7 @@ class Scene_Play : public Scene
 protected:
 
 	std::shared_ptr<Entity>		m_player;
+	std::shared_ptr<Entity>     m_selectedEntity;
 	std::string					m_levelPath;
 	PlayerConfig				m_playerConfig;
 	bool						m_drawTextures = true;
@@ -41,6 +42,7 @@ protected:
 
 	void init(const std::string& levelPath);
 	void loadLevel(const std::string& filename);
+	void loadLevel();
 	void saveLevel(const std::string& filename);
 
 	void sAnimation();

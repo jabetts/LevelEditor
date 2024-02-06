@@ -9,43 +9,58 @@
 #include <memory>
 #include <sstream>
 
+/*
+ * TODOS: - Compression for the level files, this means they will not be able 
+ *          to be editied manually by a text editor. Huffman compression would
+ *          be OK
+ *        - Undo system
+ *        - Copy and Paste (Ctrl-c, Ctrl-v)
+ */
+
 Scene_Play::Scene_Play(GameEngine* gameEngine, const std::string& levelPath)
     : Scene(gameEngine), m_levelPath(levelPath)
 {
-    
     init(m_levelPath);
 }
 
 void Scene_Play::init(const std::string& levelPath)
 {
-    registerAction(sf::Keyboard::P,      "PAUSE");
-    registerAction(sf::Keyboard::Escape, "QUIT");
-    registerAction(sf::Keyboard::T,      "TOGGLE_TEXTURE");     // Toggle drawing (T)extures
-    registerAction(sf::Keyboard::C,      "TOGGLE_COLLISION");   // Toggle drawing (C)ollision Boxes
-    registerAction(sf::Keyboard::G,      "TOGGLE_GRID");        // Toggle drawing (G)rid
-    registerAction(sf::Keyboard::P,      "PAUSE");              // Toggle pause (P)
-    registerAction(sf::Keyboard::O,      "DEBUG");              // Toggle debug text (O)
-
-    registerAction(sf::Keyboard::W,      "UP");
-    registerAction(sf::Keyboard::A,      "LEFT");
-    registerAction(sf::Keyboard::D,      "RIGHT");
-    registerAction(sf::Keyboard::S,      "DOWN");
-    registerAction(sf::Keyboard::Space,  "SHOOT");
-
+    // Options
+    registerAction(sf::Keyboard::P,         "PAUSE");
+    registerAction(sf::Keyboard::Escape,    "QUIT");
+    registerAction(sf::Keyboard::T,         "TOGGLE_TEXTURE");     // Toggle drawing (T)extures
+    registerAction(sf::Keyboard::C,         "KEYC");               // C key, for collisions and Ctrl-c
+    registerAction(sf::Keyboard::V,         "KEYV");
+    registerAction(sf::Keyboard::G,         "TOGGLE_GRID");        // Toggle drawing (G)rid
+    registerAction(sf::Keyboard::O,         "DEBUG");              // Toggle debug text (O)
     registerAction(sf::Keyboard::BackSpace, "SAVE");
-    
+    registerAction(sf::Keyboard::L,         "LOAD");
+    registerAction(sf::Keyboard::LControl,  "LCTRL");
+    registerAction(sf::Keyboard::RControl,  "RCTRL");
+
+
+    // Actions
+    registerAction(sf::Keyboard::F,         "FLIP");
+    // Movement
+    registerAction(sf::Keyboard::W,         "UP");
+    registerAction(sf::Keyboard::A,         "LEFT");
+    registerAction(sf::Keyboard::D,         "RIGHT");
+    registerAction(sf::Keyboard::S,         "DOWN");
+
     m_gridText.setCharacterSize(12);
     m_gridText.setFont(m_game->assets().getFont("Hack"));
     m_debugText.setFont(m_game->assets().getFont("Hack"));
 
+    // Camera init
     m_camera.init(m_game->window().getView(), &m_game->window(), { width() / 2, height() / 2 });
+    // Set intial position for the camera's x coord.
+    m_xScroll = width() / 2; 
 
-    m_xScroll = width() / 2;
-
+    
     loadLevel(levelPath);
 }
 
-// If pos is inside the entity
+// Check if a pointis inside an entity
 bool IsInside(Vec2 pos, std::shared_ptr<Entity> e)
 {
     auto ePos = e->getComponent<CTransform>().pos;
@@ -65,8 +80,8 @@ void Scene_Play::loadLevel(const std::string& filename)
     std::ifstream f(filename);
     if (!f.is_open())
     {
-        std::cerr << "Unable to open level file.\n";
-        exit(1);
+        // No level file given
+        return;
     }
 
     std::cout << "Loading level\n";
@@ -114,11 +129,14 @@ void Scene_Play::loadLevel(const std::string& filename)
                 >> m_playerConfig.MAXSPEED >> m_playerConfig.GRAVITY >> m_playerConfig.WEAPON;
         }
     }
-
     if (f.is_open()) { f.close(); }
-
     int time = clock.getElapsedTime().asMilliseconds();
     std::cout << "Level loaded in: " << time << " milliseconds\n";
+}
+
+void Scene_Play::loadLevel()
+{
+    return;
 }
 
 void Scene_Play::saveLevel(const std::string& filename)
@@ -126,11 +144,11 @@ void Scene_Play::saveLevel(const std::string& filename)
     sf::Clock clock;
 
     std::ofstream f(filename);
+    // No level file
     if (!f.is_open())
-    {
-        std::cerr << "Unable to open file.\n";
-        exit(1);
-    }
+        std::cerr << "Unable to save to file.\n";
+        return;
+    
 
     std::string line;
 
@@ -146,6 +164,13 @@ void Scene_Play::saveLevel(const std::string& filename)
     f << "##### Decoration data #####" << std::endl;
 
     for (auto& e : m_entityManager.getEntities("Dec"))
+    {
+        Vec2 gridPos = pixelToMidGrid(e->getComponent<CTransform>().pos.x, e->getComponent<CTransform>().pos.y, e);
+        f << "Dec" << " " << e->getComponent<CAnimation>().animation.getName() << " "
+            << gridPos.x << " " << gridPos.y << std::endl;
+    }
+
+    for (auto& e : m_entityManager.getEntities("Player"))
     {
         Vec2 gridPos = pixelToMidGrid(e->getComponent<CTransform>().pos.x, e->getComponent<CTransform>().pos.y, e);
         f << "Dec" << " " << e->getComponent<CAnimation>().animation.getName() << " "
@@ -268,7 +293,6 @@ void Scene_Play::sDoAction(const Action& action)
         else if (action.name() == "RIGHT")
         {
             m_xScroll += m_scrollStep;
-            std::cout << "m_xScroll: " << m_xScroll << "\n";
         }
         else if (action.name() == "LEFT")
         {
@@ -290,7 +314,22 @@ void Scene_Play::sDoAction(const Action& action)
         }
         else if (action.name() == "RIGHT_CLICK")
         {
+            Vec2 worldPos = windowToWorld(action.pos());
 
+            if (m_selectedEntity != nullptr)
+            {
+                m_selectedEntity = nullptr;
+            }
+
+            for (auto e : m_entityManager.getEntities())
+            {
+                if (e->hasComponent<CDraggable>() && IsInside(worldPos, e))
+                {
+                    m_selectedEntity = e;
+                    std::cout << e->getComponent<CAnimation>().animation.getName() << std::endl;
+                }
+            }
+           
         }
         else if (action.name() == "MIDDLE_CLICK")
         {
@@ -300,7 +339,19 @@ void Scene_Play::sDoAction(const Action& action)
         {
             m_mPos = action.pos();
             Vec2 worldPos = windowToWorld(m_mPos);
-        }   
+        }
+
+        else if (action.name() == "LCTRL" || action.name() == "RCTRL")
+        {
+            if (action.name() == "CKEY")
+            {
+                // Copy entity
+            }
+            if (action.name() == "VKEY")
+            {
+                // paste entity
+            }
+        }
     }
 
     if (action.type() == "END")
@@ -347,6 +398,8 @@ void Scene_Play::sRender()
 
     m_camera.setPos(camPos);
     m_camera.update();
+
+    sf::RectangleShape selectRect;
     
     // draw all Entity textures / animations
     if (m_drawTextures)
@@ -354,6 +407,20 @@ void Scene_Play::sRender()
         for (auto e : m_entityManager.getEntities())
         {
             auto& transform = e->getComponent<CTransform>();
+
+            if (IsInside(windowToWorld(m_mPos), e))
+            {
+                // Draw a red outline around the entity
+                auto& box = e->getComponent<CBoundingBox>();
+                auto& transform = e->getComponent<CTransform>();
+            
+                selectRect.setSize(sf::Vector2f(box.size.x - 1, box.size.y - 1));
+                selectRect.setOrigin(sf::Vector2f(box.halfSize.x, box.halfSize.y));
+                selectRect.setPosition(transform.pos.x, transform.pos.y);
+                selectRect.setFillColor(sf::Color(0, 0, 0, 0));
+                selectRect.setOutlineColor(sf::Color::Red);
+                selectRect.setOutlineThickness(3);
+            }
 
             if (e->hasComponent<CAnimation>())
             {
@@ -391,7 +458,6 @@ void Scene_Play::sRender()
     // draw the grid so that students can easily debug
     if (m_drawGrid)
     {   
-      
         float leftX = m_game->window().getView().getCenter().x - width() / 2;
         float rightX = leftX + width() + m_gridSize.x;
         float nextGridX = leftX - ((int)leftX % (int)m_gridSize.x);
@@ -409,7 +475,7 @@ void Scene_Play::sRender()
                 }
                 drawLine(sf::Vector2f(leftX, height() - y), sf::Vector2f(rightX, height() - y));
                 std::string xCell = std::to_string((int)x / (int)m_gridSize.x);
-                std::string yCell = std::to_string((int)y / (int)m_gridSize.y);
+                std::string yCell = std::to_string(height() - ((int)y) / (int)m_gridSize.y);
                 m_gridText.setString("(" + xCell + "," + yCell + ")");
                 m_gridText.setPosition(x + 3, y + 2);
                 m_game->window().draw(m_gridText);
@@ -417,11 +483,29 @@ void Scene_Play::sRender()
         }
     }
 
+    // Draw box around selected (right clicked) entity
+    sf::RectangleShape selected;
+    if (m_selectedEntity != nullptr)
+    {
+        auto& box = m_selectedEntity->getComponent<CBoundingBox>();
+        auto& transform = m_selectedEntity->getComponent<CTransform>();
+        selected.setSize(sf::Vector2f(box.size.x - 1, box.size.y - 1));
+        selected.setOrigin(sf::Vector2f(box.halfSize.x, box.halfSize.y));
+        selected.setPosition(transform.pos.x, transform.pos.y);
+        selected.setFillColor(sf::Color(0, 0, 0, 0));
+        selected.setOutlineColor(sf::Color::Green);
+        selected.setOutlineThickness(4);
+        m_game->window().draw(selected);
+    }
+    
+
     if (m_losFlag)
     {
         // Draw LOS debug information
     }
 
+    m_game->window().draw(selectRect);
+    m_game->window().draw(selected);
     m_game->window().display();
     m_currentFrame++;
 }

@@ -12,6 +12,7 @@ class EntityManager
 	EntityVec m_entities;
 	EntityVec m_entitiesToAdd;
 	EntityMap m_entityMap;
+	EntityVec m_entityUndo;
 	size_t    m_totalEntities = 0;
 
 	// helper function to avoid repeated code

@@ -5,11 +5,11 @@ void GameEngine::init(const std::string& path)
 
 	m_assets.loadFromFile(path);
 
-	m_window.create(sf::VideoMode(1280, 768), "Level Editor");
+	m_window.create(sf::VideoMode(1920, 1080), "Level Editor");
 	m_window.setFramerateLimit(60);
 	m_window.setVerticalSyncEnabled(true);
 
-	changeScene("play", std::make_shared<Scene_Play>(this, "level1.txt"), true);
+	changeScene("play", std::make_shared<Scene_Play>(this, "level2.txt"), true);
 }
 
 void GameEngine::update()
