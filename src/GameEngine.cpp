@@ -9,7 +9,7 @@ void GameEngine::init(const std::string& path)
 	m_window.setFramerateLimit(60);
 	m_window.setVerticalSyncEnabled(true);
 
-	changeScene("play", std::make_shared<Scene_Play>(this, "level2.txt"), true);
+	changeScene("play", std::make_shared<Scene_Play>(this, "level1.txt"), true);
 }
 
 void GameEngine::update()

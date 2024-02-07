@@ -10,11 +10,15 @@
 #include <sstream>
 
 /*
- * TODOS: - Compression for the level files, this means they will not be able 
+ * TODOS: - Seperate view(window) for assets able to be placed in the game world
+ *          these should be clicked and dragged into the game world and click again
+ *          to be placed on the level
+ *        - Compression for the level files, this means they will not be able 
  *          to be editied manually by a text editor. Huffman compression would
  *          be OK
  *        - Undo system
- *        - Copy and Paste (Ctrl-c, Ctrl-v)
+ *        - Copy and Paste and delete (Ctrl-c, Ctrl-v, del) - tile select system already in place
+ *        - Spawn a player to play the level
  */
 
 Scene_Play::Scene_Play(GameEngine* gameEngine, const std::string& levelPath)
@@ -38,9 +42,9 @@ void Scene_Play::init(const std::string& levelPath)
     registerAction(sf::Keyboard::LControl,  "LCTRL");
     registerAction(sf::Keyboard::RControl,  "RCTRL");
 
-
     // Actions
     registerAction(sf::Keyboard::F,         "FLIP");
+    registerAction(sf::Keyboard::Delete,    "DELETE");
     // Movement
     registerAction(sf::Keyboard::W,         "UP");
     registerAction(sf::Keyboard::A,         "LEFT");
@@ -52,15 +56,14 @@ void Scene_Play::init(const std::string& levelPath)
     m_debugText.setFont(m_game->assets().getFont("Hack"));
 
     // Camera init
-    m_camera.init(m_game->window().getView(), &m_game->window(), { width() / 2, height() / 2 });
+    //m_camera.init(m_game->window().getView(), &m_game->window(), { width() / 2, height() / 2 });
     // Set intial position for the camera's x coord.
     m_xScroll = width() / 2; 
 
-    
     loadLevel(levelPath);
 }
 
-// Check if a pointis inside an entity
+// Check if a point is inside an entity
 bool IsInside(Vec2 pos, std::shared_ptr<Entity> e)
 {
     auto ePos = e->getComponent<CTransform>().pos;
@@ -179,7 +182,6 @@ void Scene_Play::saveLevel(const std::string& filename)
 
     f.close();
     std::cout << "file saved\n";
-
 }
 
 Vec2 Scene_Play::gridToMidPixel(float gridX, float gridY, std::shared_ptr<Entity> entity)
@@ -245,11 +247,11 @@ void Scene_Play::sMovement()
         if (e->hasComponent<CGravity>())
         {
             e->getComponent<CTransform>().velocity.y += e->getComponent<CGravity>().gravity;
-            if (e->getComponent<CTransform>().velocity.y > m_playerConfig.MAXSPEED * 3)
-            {
+            //if (e->getComponent<CTransform>().velocity.y > m_playerConfig.MAXSPEED * 3)
+            //{
                 // Terminal velocity
-                e->getComponent<CTransform>().velocity.y = m_playerConfig.MAXSPEED * 3;
-            }
+                //e->getComponent<CTransform>().velocity.y = m_playerConfig.MAXSPEED * 3;
+            //}
         }
 
         // Add the velocities to the entities
@@ -298,14 +300,23 @@ void Scene_Play::sDoAction(const Action& action)
         {
             m_xScroll -= m_scrollStep;
         }
+        // TODO: This flip is not saved to the file as the current save file format does not include a scale.x
+        //       will need to update the level file spec to support this.
+        else if (action.name() == "FLIP")
+        {
+            if (m_selectedEntity != nullptr)
+            {
+                m_selectedEntity->getComponent<CTransform>().scale.x = -m_selectedEntity->getComponent<CTransform>().scale.x;
+            }
+        }
         // mouse actions
         else if (action.name() == "LEFT_CLICK")
         {
-            Vec2 worldPos = windowToWorld(action.pos());
+            //Vec2 worldPos = windowToWorld(action.pos());
 
             for (auto e : m_entityManager.getEntities())
             {
-                if (e->hasComponent<CDraggable>() && IsInside(worldPos, e))
+                if (e->hasComponent<CDraggable>() && IsInside({ m_mousePos.worldPos.x, m_mousePos.worldPos.y }, e))
                 {
                     std::cout << e->getComponent<CAnimation>().animation.getName() << std::endl;
                     e->getComponent<CDraggable>().dragging = !e->getComponent<CDraggable>().dragging;
@@ -314,7 +325,9 @@ void Scene_Play::sDoAction(const Action& action)
         }
         else if (action.name() == "RIGHT_CLICK")
         {
-            Vec2 worldPos = windowToWorld(action.pos());
+
+            //Vec2 worldPos = windowToWorld(action.pos());
+
 
             if (m_selectedEntity != nullptr)
             {
@@ -323,13 +336,11 @@ void Scene_Play::sDoAction(const Action& action)
 
             for (auto e : m_entityManager.getEntities())
             {
-                if (e->hasComponent<CDraggable>() && IsInside(worldPos, e))
+                if (e->hasComponent<CDraggable>() && IsInside({ m_mousePos.worldPos.x, m_mousePos.worldPos.y }, e))
                 {
-                    m_selectedEntity = e;
-                    std::cout << e->getComponent<CAnimation>().animation.getName() << std::endl;
+                        m_selectedEntity = e;
                 }
             }
-           
         }
         else if (action.name() == "MIDDLE_CLICK")
         {
@@ -337,8 +348,23 @@ void Scene_Play::sDoAction(const Action& action)
         }
         else if (action.name() == "MOUSE_MOVE")
         {
-            m_mPos = action.pos();
-            Vec2 worldPos = windowToWorld(m_mPos);
+            //m_mPos = action.pos();
+            //Vec2 worldPos = windowToWorld(m_mPos);
+
+            updateMouseCoords(action.pos());
+            
+            m_debugText.setCharacterSize(20);
+            m_debugText.setFillColor(sf::Color::White);
+            m_debugText.setOutlineColor(sf::Color::Black);
+            m_debugText.setFont(m_game->assets().getFont("Mario"));
+            std::stringstream ss;
+
+            ss << "Window pos: " << m_mousePos.winPos.x << " " << m_mousePos.winPos.y << "\n"
+                << "World pos: " << m_mousePos.worldPos.x << " " << m_mousePos.worldPos.y << "\n"
+                << "Grid pos: " << m_mousePos.gridPos.x << " " << m_mousePos.gridPos.y << "\n";
+
+            m_debugText.setString(ss.str());
+
         }
 
         else if (action.name() == "LCTRL" || action.name() == "RCTRL")
@@ -394,10 +420,18 @@ void Scene_Play::sRender()
 {
     m_game->window().clear(sf::Color(148, 148, 255));
     
-    Vec2 camPos(m_xScroll, height() / 2);
+    m_view = m_game->window().getView();
+    sf::View map = m_game->window().getView();
+    sf::View ui = m_game->window().getDefaultView();
 
-    m_camera.setPos(camPos);
-    m_camera.update();
+    float viewX = std::max((float)m_xScroll, width() / 2.0f);
+    m_view.setCenter(viewX, height() / 2);
+
+    map.setCenter(m_view.getCenter());
+    map.setViewport(sf::FloatRect(0.75f, 0.f, 0.25f, 0.25f));
+
+    // Render tile elements
+    m_game->window().setView(m_view);
 
     sf::RectangleShape selectRect;
     
@@ -408,7 +442,7 @@ void Scene_Play::sRender()
         {
             auto& transform = e->getComponent<CTransform>();
 
-            if (IsInside(windowToWorld(m_mPos), e))
+            if (IsInside({m_mousePos.worldPos.x, m_mousePos.worldPos.y}, e))
             {
                 // Draw a red outline around the entity
                 auto& box = e->getComponent<CBoundingBox>();
@@ -457,7 +491,8 @@ void Scene_Play::sRender()
 
     // draw the grid so that students can easily debug
     if (m_drawGrid)
-    {   
+    {
+
         float leftX = m_game->window().getView().getCenter().x - width() / 2;
         float rightX = leftX + width() + m_gridSize.x;
         float nextGridX = leftX - ((int)leftX % (int)m_gridSize.x);
@@ -475,15 +510,17 @@ void Scene_Play::sRender()
                 }
                 drawLine(sf::Vector2f(leftX, height() - y), sf::Vector2f(rightX, height() - y));
                 std::string xCell = std::to_string((int)x / (int)m_gridSize.x);
-                std::string yCell = std::to_string(height() - ((int)y) / (int)m_gridSize.y);
+                std::string yCell = std::to_string((int)(height() - y) / (int)m_gridSize.y);
                 m_gridText.setString("(" + xCell + "," + yCell + ")");
                 m_gridText.setPosition(x + 3, y + 2);
                 m_game->window().draw(m_gridText);
             }
         }
+
     }
 
     // Draw box around selected (right clicked) entity
+    // TODO: Move this stuff to a function that just returns the rectange
     sf::RectangleShape selected;
     if (m_selectedEntity != nullptr)
     {
@@ -504,8 +541,14 @@ void Scene_Play::sRender()
         // Draw LOS debug information
     }
 
+    // UI highlights - these need to be drawn in view after everything else.
     m_game->window().draw(selectRect);
     m_game->window().draw(selected);
+
+    // Static UI elements
+    m_game->window().setView(ui);
+    m_game->window().draw(m_debugText);
+
     m_game->window().display();
     m_currentFrame++;
 }
@@ -515,6 +558,8 @@ void Scene_Play::sDebug()
 {
 }
 
+
+// TODO: Fix this as y is reversed.
 void Scene_Play::sDrag()
 {
     for (auto e : m_entityManager.getEntities())
@@ -523,7 +568,7 @@ void Scene_Play::sDrag()
         {
             Vec2 worldPos = windowToWorld(m_mPos);
             Vec2 gridPos = pixelToMidGrid(worldPos.x, worldPos.y, e);
-            e->getComponent<CTransform>().pos = gridToMidPixel(gridPos.x, gridPos.y, e);
+            e->getComponent<CTransform>().pos = gridToMidPixel(m_mousePos.gridPos.x, m_mousePos.gridPos.y, e);
         }
     }
 }
@@ -541,6 +586,16 @@ void Scene_Play::drawLine(sf::Vector2f v1, sf::Vector2f v2)
     line[1].color = sf::Color::White;
 
     m_game->window().draw(line);
+}
+
+void Scene_Play::updateMouseCoords(Vec2 mousePos)
+{
+    m_game->window().setView(m_view);
+    m_mousePos.screenPos = sf::Mouse::getPosition();
+    m_mousePos.winPos = {static_cast<int>(mousePos.x), static_cast<int>(mousePos.y)};
+    m_mousePos.worldPos = m_game->window().mapPixelToCoords(m_mousePos.winPos);
+    m_mousePos.gridPos.x = m_mousePos.worldPos.x / m_gridSize.x;
+    m_mousePos.gridPos.y = static_cast<int>((height()) - m_mousePos.worldPos.y) / m_gridSize.y;
 }
 
 float Scene_Play::width() const
