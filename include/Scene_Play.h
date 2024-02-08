@@ -3,14 +3,17 @@
 #include <map>
 #include <memory>
 #include <algorithm>
-#include <sstream>
-#include "Camera.h"
 #include "Scene.h"
+#include "Menu.h"
 #include "EntityManager.h"
+
+typedef sf::Vector2f Vec2f;
+typedef sf::Vector2i Vec2i;
+typedef sf::Vector2u Vec2u;
 
 class Scene_Play : public Scene
 {
-	// This is used to configure the player tart location, speed, gravity etc.
+	// This is used to configure the player start location, speed, gravity etc.
 	// it is written to the level file and is loaded by hte level loader
 	struct PlayerConfig
 	{
@@ -20,19 +23,20 @@ class Scene_Play : public Scene
 
 	struct MousePos
 	{
-		sf::Vector2i				winPos;
-		sf::Vector2f				worldPos;
-		sf::Vector2u				gridPos;
-		sf::Vector2i				screenPos;
+		Vec2i						winPos;
+		Vec2f						worldPos;
+		Vec2u						gridPos;
+		Vec2i						screenPos;
 	};
 
 protected:
-
 	std::shared_ptr<Entity>			m_player;
 	std::shared_ptr<Entity>			m_selectedEntity;
 	std::string						m_levelPath;
+	std::string						m_savePath;
 	PlayerConfig					m_playerConfig;
 	MousePos                        m_mousePos;
+	Menu							m_menu;
 	bool							m_drawTextures = true;
 	bool							m_drawCollision = false;
 	bool							m_drawGrid = false;
@@ -41,7 +45,8 @@ protected:
 	bool							m_losFlag = false;
 	bool							m_gridSnap = true;
 	int								m_xScroll = 0;
-	int								m_scrollStep = 10;
+	int								m_scrollStep = 20;
+	int								m_mouseScrollAcc = 10;
 	sf::Text						m_gridText;
 	sf::Text						m_debugText;
 	Vec2							m_gridSize = {64, 64};
@@ -49,12 +54,9 @@ protected:
 	sf::CircleShape					m_shape;
 	sf::View						m_view;
 	
-
-
-
 	void init(const std::string& levelPath);
 	void loadLevel(const std::string& filename);
-	void loadLevel();
+	void loadLevel(int i);
 	void saveLevel(const std::string& filename);
 
 	void sAnimation();

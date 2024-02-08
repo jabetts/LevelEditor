@@ -1,0 +1,30 @@
+-----------------------------------------------------------------------------------
+	TODO
+-----------------------------------------------------------------------------------
+This file lists items to complete, and ideas for further ideas that need to
+be fleshed out. 
+
+-----------------------------------------------------------------------------------
+	Menu system
+-----------------------------------------------------------------------------------
+- Create a menu system for the level editor, that could be imported into another
+  project, sort of like an API. 
+
+-----------------------------------------------------------------------------------
+	Font system
+-----------------------------------------------------------------------------------
+- I want the font system to be similar to old school DOS games where each letter
+  was a bitmap, I want that old school look. With resolution scaling of the game
+  the bitmap can be enlarged, so I want it to be able to be aligned so integer
+  scaling makes it still look sharp. I will need to research this but the system
+  could be plugged into other game projects I create
+
+-----------------------------------------------------------------------------------
+	Resources
+-----------------------------------------------------------------------------------
+- We alreay have a good asset loader and entity manager, however I want the asset
+  loader to be able to load from a large file similar to a WAD file. Where all our
+  assets are stored in one large file (probably compressed) and the asset loader
+  simply loads the WAD and code can pull the required asset from the loaded WAD
+  file. Since memory is not n issue for the types of games, all assets will be in
+  memory.

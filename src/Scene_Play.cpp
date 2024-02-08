@@ -19,12 +19,30 @@
  *        - Undo system
  *        - Copy and Paste and delete (Ctrl-c, Ctrl-v, del) - tile select system already in place
  *        - Spawn a player to play the level
+ *        - Update the render system. Have a render class that renders eahc view element seperately
+ *        - This may require passing entitiyMaps - Graphics etc, rendering in specific orders i.e.
+ *           - renderer.renderTiles
+ *           - renderer.renderEffects
+ *           - renderer.renderPlayer
+ *           - renderer.renderUI
+ *           - renderer.renderMenu
+ *          This will require some planning and thought how I want to acheive this, but can then
+ *          be used in other games
+ *        - Menu, can base this on the menu system used in the DOOM source code for learning
  */
 
 Scene_Play::Scene_Play(GameEngine* gameEngine, const std::string& levelPath)
     : Scene(gameEngine), m_levelPath(levelPath)
 {
     init(m_levelPath);
+}
+
+void actionMenu(int n)
+{
+    switch (n)
+    {
+
+    }
 }
 
 void Scene_Play::init(const std::string& levelPath)
@@ -51,14 +69,21 @@ void Scene_Play::init(const std::string& levelPath)
     registerAction(sf::Keyboard::D,         "RIGHT");
     registerAction(sf::Keyboard::S,         "DOWN");
 
+    // Text for the grid
     m_gridText.setCharacterSize(12);
     m_gridText.setFont(m_game->assets().getFont("Hack"));
     m_debugText.setFont(m_game->assets().getFont("Hack"));
 
-    // Camera init
-    //m_camera.init(m_game->window().getView(), &m_game->window(), { width() / 2, height() / 2 });
-    // Set intial position for the camera's x coord.
+    // Initialise starting point of the main view
     m_xScroll = width() / 2; 
+
+    // Initialise Menu system
+    Menu::MenuItem mainMenu[] = {
+        {1, "M_NLEVEL",'n', actionMenu},
+        {1, "M_SAVE",  's', actionMenu},
+        {1, "M_LOAD",  'l', actionMenu},
+        {1, "M_QUIT",  'q', actionMenu},
+    };
 
     loadLevel(levelPath);
 }
@@ -137,7 +162,7 @@ void Scene_Play::loadLevel(const std::string& filename)
     std::cout << "Level loaded in: " << time << " milliseconds\n";
 }
 
-void Scene_Play::loadLevel()
+void Scene_Play::loadLevel(int i)
 {
     return;
 }
@@ -292,13 +317,36 @@ void Scene_Play::sDoAction(const Action& action)
         else if (action.name() == "COLLISIONS") { m_collisions = !m_collisions; }
         else if (action.name() == "DEBUG") { m_debugFlag = !m_debugFlag; }
         else if (action.name() == "SAVE") { saveLevel("level2.txt"); }
+        
+        // movement keys - basic movement and mouse acceleration if mouse with 100 pixels of each side of
+        // the window. TODO: make the mouse position a percantage rather than hard coded pixels
         else if (action.name() == "RIGHT")
         {
-            m_xScroll += m_scrollStep;
+            std::cout << m_scrollStep << "\n";
+            if (m_mousePos.winPos.x > width() - 100)
+            {
+                m_xScroll += m_scrollStep + m_mouseScrollAcc++;
+            }
+            else
+            {
+                m_xScroll += m_scrollStep;
+                m_mouseScrollAcc = 20;
+            }
         }
         else if (action.name() == "LEFT")
         {
-            m_xScroll -= m_scrollStep;
+            std::cout << m_scrollStep << "\n";
+            if (m_mousePos.winPos.x < 100)
+            {
+                if (m_xScroll > width() / 2)
+                    m_xScroll -= m_scrollStep + m_mouseScrollAcc++;;
+            }
+            else
+            {
+                if(m_xScroll > width() / 2)
+                    m_xScroll -= m_scrollStep;
+                    m_mouseScrollAcc = 20;
+            }
         }
         // TODO: This flip is not saved to the file as the current save file format does not include a scale.x
         //       will need to update the level file spec to support this.
@@ -326,9 +374,6 @@ void Scene_Play::sDoAction(const Action& action)
         else if (action.name() == "RIGHT_CLICK")
         {
 
-            //Vec2 worldPos = windowToWorld(action.pos());
-
-
             if (m_selectedEntity != nullptr)
             {
                 m_selectedEntity = nullptr;
@@ -346,7 +391,7 @@ void Scene_Play::sDoAction(const Action& action)
         {
 
         }
-        else if (action.name() == "MOUSE_MOVE")
+        if (action.name() == "MOUSE_MOVE")
         {
             //m_mPos = action.pos();
             //Vec2 worldPos = windowToWorld(m_mPos);
@@ -384,11 +429,11 @@ void Scene_Play::sDoAction(const Action& action)
     {
         if (action.name() == "LEFT")
         {
-          
+            m_scrollStep = 20;
         }
         else if (action.name() == "RIGHT")
         {
-         
+            m_scrollStep = 20;
         }
     }
 }

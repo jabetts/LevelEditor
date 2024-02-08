@@ -149,6 +149,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Menu.cpp" />
+    <ClCompile Include="src\Renderer.cpp" />
     <ClCompile Include="src\Action.cpp" />
     <ClCompile Include="src\Animation.cpp" />
     <ClCompile Include="src\Assets.cpp" />
@@ -175,6 +177,8 @@
     <ClInclude Include="include\Scene.h" />
     <ClInclude Include="include\Scene_Play.h" />
     <ClInclude Include="include\vec2.h" />
+    <ClInclude Include="include\Renderer.h" />
+    <ClInclude Include="include\Menu.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
@@ -184,6 +188,8 @@
   <ItemGroup>
     <Text Include="assets.txt" />
     <Text Include="level1.txt" />
+    <Text Include="level2.txt" />
+    <Text Include="todo.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
