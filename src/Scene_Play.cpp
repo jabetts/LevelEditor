@@ -537,7 +537,6 @@ void Scene_Play::sRender()
     // draw the grid so that students can easily debug
     if (m_drawGrid)
     {
-
         float leftX = m_game->window().getView().getCenter().x - width() / 2;
         float rightX = leftX + width() + m_gridSize.x;
         float nextGridX = leftX - ((int)leftX % (int)m_gridSize.x);
@@ -559,9 +558,9 @@ void Scene_Play::sRender()
                 m_gridText.setString("(" + xCell + "," + yCell + ")");
                 m_gridText.setPosition(x + 3, y + 2);
                 m_game->window().draw(m_gridText);
+                // TODO: Draw a box around the mouse grid position
             }
         }
-
     }
 
     // Draw box around selected (right clicked) entity

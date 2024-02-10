@@ -14,12 +14,10 @@ class Menu
 	Menu*						m_prevMenu  = nullptr;
 	MenuItem*					m_menuItems = nullptr;
 	int							m_numItems  = 0;
-	int							m_iconXoff  = -64;  // incons offset from menu item
-	float						m_x, m_y;			// window x, y of menu
+	int							m_iconXoff  = -64;  // icons x offset from menu item
+	float						m_x, m_y;			// x, y of top left of menu in window coords
 	short						m_lastOn    = 0;	// last menu item the user was on
 	short						m_itemOn    = 0;    // item the icon is on
-
-	void drawMenu();
 
 public:
 	struct MenuItem
@@ -41,6 +39,7 @@ public:
 	}
 
 	void setItems(MenuItem* menuItems);
+	void renderMenu(sf::View view);
 	void setIconOffset(int);
 };
 
