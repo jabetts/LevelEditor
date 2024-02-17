@@ -1,24 +1,23 @@
 #pragma once
 
+#include <SFML/Graphics.hpp>
 #include "Assets.h"
-#include "EntityManager.h"
-#include "GameEngine.h"
 
 typedef std::vector<std::shared_ptr<Animation>> AnimationVec;
 
 class TileMenu
 {
-	GameEngine*							m_game;
 	AnimationVec						m_animations;
 	sf::RectangleShape                  m_menuBorder;
 	Vec2								m_menuPos;
+	Assets*								m_assets;
 
 	void loadTiles();
-	void renderTileMenu();
-
+	void drawTile();
 
 public:
-	TileMenu(GameEngine* g);
+	TileMenu(Assets* assets);
 	void setBorderSize(Vec2 size);
+	void renderTileMenu(sf::RenderWindow &window);
 };
 

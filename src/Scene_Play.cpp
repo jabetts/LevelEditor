@@ -1,7 +1,7 @@
 #include "Scene_Play.h"
 #include "Physics.h"
 #include "Assets.h"
-#include "GameEngine.h"
+
 #include "components.h"
 #include "Action.h"
 
@@ -32,7 +32,7 @@
  */
 
 Scene_Play::Scene_Play(GameEngine* gameEngine, const std::string& levelPath)
-    : Scene(gameEngine), m_levelPath(levelPath)
+    : Scene(gameEngine), m_levelPath(levelPath), m_tileMenu(&m_game->assets())
 {
     init(m_levelPath);
 }
@@ -68,6 +68,7 @@ void Scene_Play::init(const std::string& levelPath)
     registerAction(sf::Keyboard::A,         "LEFT");
     registerAction(sf::Keyboard::D,         "RIGHT");
     registerAction(sf::Keyboard::S,         "DOWN");
+    registerAction(sf::Keyboard::F2,        "TILE_MENU");
 
     // Text for the grid
     m_gridText.setCharacterSize(12);
@@ -84,8 +85,6 @@ void Scene_Play::init(const std::string& levelPath)
         {1, "M_LOAD",  'l', actionMenu},
         {1, "M_QUIT",  'q', actionMenu},
     };
-
-    TileMenu tileMenu(m_game);
 
     loadLevel(levelPath);
 }
@@ -178,7 +177,6 @@ void Scene_Play::saveLevel(const std::string& filename)
     if (!f.is_open())
         std::cerr << "Unable to save to file.\n";
         return;
-    
 
     std::string line;
 
@@ -274,11 +272,6 @@ void Scene_Play::sMovement()
         if (e->hasComponent<CGravity>())
         {
             e->getComponent<CTransform>().velocity.y += e->getComponent<CGravity>().gravity;
-            //if (e->getComponent<CTransform>().velocity.y > m_playerConfig.MAXSPEED * 3)
-            //{
-                // Terminal velocity
-                //e->getComponent<CTransform>().velocity.y = m_playerConfig.MAXSPEED * 3;
-            //}
         }
 
         // Add the velocities to the entities
@@ -319,6 +312,7 @@ void Scene_Play::sDoAction(const Action& action)
         else if (action.name() == "COLLISIONS") { m_collisions = !m_collisions; }
         else if (action.name() == "DEBUG") { m_debugFlag = !m_debugFlag; }
         else if (action.name() == "SAVE") { saveLevel("level2.txt"); }
+        else if (action.name() == "TILE_MENU") { m_displayTileMenu = !m_displayTileMenu; }
         
         // movement keys - basic movement and mouse acceleration if mouse with 100 pixels of each side of
         // the window. TODO: make the mouse position a percantage rather than hard coded pixels
@@ -589,12 +583,14 @@ void Scene_Play::sRender()
     m_game->window().setView(ui);
     m_game->window().draw(m_debugText);
     // draw tile menu
-    renderTileMenu({ 10,10 });
+    if (m_displayTileMenu)
+    {
+        m_tileMenu.renderTileMenu(m_game->window());
+    }
 
     m_game->window().display();
     m_currentFrame++;
 }
-
 
 void Scene_Play::sDebug()
 {
@@ -638,35 +634,6 @@ void Scene_Play::updateMouseCoords(Vec2 mousePos)
     m_mousePos.worldPos = m_game->window().mapPixelToCoords(m_mousePos.winPos);
     m_mousePos.gridPos.x = m_mousePos.worldPos.x / m_gridSize.x;
     m_mousePos.gridPos.y = static_cast<int>((height()) - m_mousePos.worldPos.y) / m_gridSize.y;
-}
-
-void Scene_Play::renderTileMenu(Vec2 pos)
-{
-    // TODO: Add all the tile assets here that will be selectable for
-    //       the user. Tiles hould be highlighted when mouse over and
-    //       when clicked should be copied, with the copy made draggable
-    //       with the user able to place the tile wherever they want as 
-    //       long as there is no existing tile in place. The movement and
-    //       copy functions etc. will be handled somewhere else
-
-    //       This function will handle making the menu draggable. A rectangle
-    //       frame will be used for the menu border, with a titlebar. Perhaps 
-    //       the tile menu should have it's own class in the future but for the
-    //       purposes of this level editor this should be fine as I don't expect
-    //       to expand this to anything other than a convenience for making 
-    //       levels for the COMP 4300 assignments.
-
-    //       For now we will make the tile menu 8x2 tiles, which is enough for
-    //       the amount of tiles we are importing, but we should record the 
-    //       amount being imported in the asset loader
-    //
-    //       will also need to handle decorations in the future
-
-    Animation ground = m_game->assets().getAnimation("Ground");
-    Animation brick = m_game->assets().getAnimation("Brick");
-    Animation block = m_game->assets().getAnimation("Block");
-
-
 }
 
 float Scene_Play::width() const
