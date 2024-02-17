@@ -85,6 +85,8 @@ void Scene_Play::init(const std::string& levelPath)
         {1, "M_QUIT",  'q', actionMenu},
     };
 
+    TileMenu tileMenu(m_game);
+
     loadLevel(levelPath);
 }
 
@@ -578,12 +580,6 @@ void Scene_Play::sRender()
         selected.setOutlineThickness(4);
         m_game->window().draw(selected);
     }
-    
-
-    if (m_losFlag)
-    {
-        // Draw LOS debug information
-    }
 
     // UI highlights - these need to be drawn in view after everything else.
     m_game->window().draw(selectRect);
@@ -592,6 +588,8 @@ void Scene_Play::sRender()
     // Static UI elements
     m_game->window().setView(ui);
     m_game->window().draw(m_debugText);
+    // draw tile menu
+    renderTileMenu({ 10,10 });
 
     m_game->window().display();
     m_currentFrame++;
@@ -640,6 +638,35 @@ void Scene_Play::updateMouseCoords(Vec2 mousePos)
     m_mousePos.worldPos = m_game->window().mapPixelToCoords(m_mousePos.winPos);
     m_mousePos.gridPos.x = m_mousePos.worldPos.x / m_gridSize.x;
     m_mousePos.gridPos.y = static_cast<int>((height()) - m_mousePos.worldPos.y) / m_gridSize.y;
+}
+
+void Scene_Play::renderTileMenu(Vec2 pos)
+{
+    // TODO: Add all the tile assets here that will be selectable for
+    //       the user. Tiles hould be highlighted when mouse over and
+    //       when clicked should be copied, with the copy made draggable
+    //       with the user able to place the tile wherever they want as 
+    //       long as there is no existing tile in place. The movement and
+    //       copy functions etc. will be handled somewhere else
+
+    //       This function will handle making the menu draggable. A rectangle
+    //       frame will be used for the menu border, with a titlebar. Perhaps 
+    //       the tile menu should have it's own class in the future but for the
+    //       purposes of this level editor this should be fine as I don't expect
+    //       to expand this to anything other than a convenience for making 
+    //       levels for the COMP 4300 assignments.
+
+    //       For now we will make the tile menu 8x2 tiles, which is enough for
+    //       the amount of tiles we are importing, but we should record the 
+    //       amount being imported in the asset loader
+    //
+    //       will also need to handle decorations in the future
+
+    Animation ground = m_game->assets().getAnimation("Ground");
+    Animation brick = m_game->assets().getAnimation("Brick");
+    Animation block = m_game->assets().getAnimation("Block");
+
+
 }
 
 float Scene_Play::width() const

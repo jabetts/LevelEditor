@@ -163,6 +163,7 @@
     <ClCompile Include="src\Scene.cpp" />
     <ClCompile Include="src\Scene_Play.cpp" />
     <ClCompile Include="src\vec2.cpp" />
+    <ClCompile Include="src\tileMenu.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Action.h" />
@@ -179,6 +180,7 @@
     <ClInclude Include="include\vec2.h" />
     <ClInclude Include="include\Renderer.h" />
     <ClInclude Include="include\Menu.h" />
+    <ClInclude Include="include\tileMenu.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />

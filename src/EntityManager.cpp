@@ -1,7 +1,6 @@
 #include "EntityManager.h"
 #include <iostream>
 
-
 EntityManager::EntityManager()
 {
 
@@ -44,7 +43,6 @@ void EntityManager::update()
 		removeDeadEntities(entityVec);
 	}
 }
-
 
 std::shared_ptr<Entity> EntityManager::addEntity(std::string tag)
 {	

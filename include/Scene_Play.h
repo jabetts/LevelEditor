@@ -6,6 +6,7 @@
 #include "Scene.h"
 #include "Menu.h"
 #include "EntityManager.h"
+#include "tileMenu.h"
 
 typedef sf::Vector2f Vec2f;
 typedef sf::Vector2i Vec2i;
@@ -51,6 +52,7 @@ protected:
 	sf::Text						m_debugText;
 	Vec2							m_gridSize = {64, 64};
 	Vec2							m_mPos;
+	Vec2							m_tileMenuPos;
 	sf::CircleShape					m_shape;
 	sf::View						m_view;
 	
@@ -74,6 +76,7 @@ protected:
 	void spawnBullet(std::shared_ptr<Entity> entity);
 	void drawLine(sf::Vector2f v1, sf::Vector2f v2);
 	void updateMouseCoords(Vec2 mousePos);
+	void renderTileMenu(Vec2 pos);
 
 	float width() const;
 	float height() const;

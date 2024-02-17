@@ -101,3 +101,8 @@ void Assets::loadFromFile(std::string path)
 
 	f.close();
 }
+
+std::map<std::string, Animation> Assets::getAnimationMap()
+{
+	return m_animations;
+}
