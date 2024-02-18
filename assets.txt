@@ -1,6 +1,3 @@
-Texture KnightIdle assets/Heroes/Knight/Idle/Idle-Sheet.png
-Texture KnightRun assets/Heroes/Knight/Run/Run-Sheet.png
-Texture OrcIdle assets/Enemy/OrcCrew/Orc/Idle/Idle-Sheet.png
 Texture Basalt assets/Tiles/basalt.png
 Texture MegamanStand assets/MegamanStand.png
 Texture MegamanRun assets/MegamanRun.png
@@ -24,15 +21,11 @@ Texture DecBrickSmall assets/DecBrickSmall.png
 Texture Explosion assets/Explosion.png
 Texture DecCoin assets/DecCoin.png
 Texture GoombaAlive assets/GoombaAlive.png
-Texture Bullet assets/Bullet.png
 Font Hack assets/hack.ttf
 Font Mario assets/mario.ttf
 Animation MegamanStand MegamanStand 3 60
 Animation MegamanRun MegamanRun 3 8
 Animation MegamanJump MegamanJump 1 0
-Animation KnightRun KnightRun 6 20
-Animation KnightIdle KnightIdle 4 60
-Animation OrcIdle OrcIdle 4 60
 Animation Basalt Basalt 1 0
 Animation Ground Ground 1 0
 Animation Brick Brick 1 0
@@ -54,4 +47,3 @@ Animation DecBrickSmall DecBrickSmall 1 0
 Animation Explosion Explosion 12 5
 Animation BrickSpecial Brick 1 0
 Animation GoombaAlive GoombaAlive 2 20
-Animation Bullet Bullet 1 0

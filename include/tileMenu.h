@@ -19,5 +19,6 @@ public:
 	TileMenu(Assets* assets);
 	void setBorderSize(Vec2 size);
 	void renderTileMenu(sf::RenderWindow &window);
+	AnimationVec& animations();
 };
 

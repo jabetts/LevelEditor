@@ -100,6 +100,19 @@ bool IsInside(Vec2 pos, std::shared_ptr<Entity> e)
     return (dx <= size.x / 2) && (dy <= size.y / 2);
 }
 
+bool isInsideBox(Vec2 pos, Vec2 target, size_t size)
+{
+    if (pos.x < target.x - (size / 2) || pos.x > target.x + (size / 2))
+    {
+        return false;
+    }
+    if (pos.y < (target.y - size / 2) || pos.y > target.y + (size / 2))
+    {
+        return false;
+    }
+    return true;
+}
+
 void Scene_Play::loadLevel(const std::string& filename)
 {
     sf::Clock clock;
@@ -175,8 +188,10 @@ void Scene_Play::saveLevel(const std::string& filename)
     std::ofstream f(filename);
     // No level file
     if (!f.is_open())
+    {
         std::cerr << "Unable to save to file.\n";
         return;
+    }
 
     std::string line;
 
@@ -195,7 +210,7 @@ void Scene_Play::saveLevel(const std::string& filename)
     {
         Vec2 gridPos = pixelToMidGrid(e->getComponent<CTransform>().pos.x, e->getComponent<CTransform>().pos.y, e);
         f << "Dec" << " " << e->getComponent<CAnimation>().animation.getName() << " "
-            << gridPos.x << " " << gridPos.y << std::endl;
+            << gridPos.x << " " << gridPos.y + 1 << std::endl;
     }
 
     for (auto& e : m_entityManager.getEntities("Player"))
@@ -356,8 +371,6 @@ void Scene_Play::sDoAction(const Action& action)
         // mouse actions
         else if (action.name() == "LEFT_CLICK")
         {
-            //Vec2 worldPos = windowToWorld(action.pos());
-
             for (auto e : m_entityManager.getEntities())
             {
                 if (e->hasComponent<CDraggable>() && IsInside({ m_mousePos.worldPos.x, m_mousePos.worldPos.y }, e))
@@ -366,6 +379,29 @@ void Scene_Play::sDoAction(const Action& action)
                     e->getComponent<CDraggable>().dragging = !e->getComponent<CDraggable>().dragging;
                 }
             }
+
+            if (m_displayTileMenu)
+            {
+                for (auto& a : m_tileMenu.animations())
+                {
+                    if (isInsideBox({ (float)m_mousePos.winPos.x, (float)m_mousePos.winPos.y }, { a->getSprite().getPosition().x,
+                        a->getSprite().getPosition().y }, 64))
+                    {
+                        printf("Animation selected: %s: x: %f y: %f size: %f\n", a->getName().c_str(), 
+                            a->getSprite().getPosition().x, a->getSprite().getPosition().y,
+                            a->getSize().x);
+
+                        // Create the tile entity, make it draggable and set it to dragging
+                        auto t = m_entityManager.addEntity("Tile");
+                        t->addComponent<CAnimation>(m_game->assets().getAnimation(a->getName().c_str()), true);
+                        t->addComponent<CBoundingBox>(m_game->assets().getAnimation("Ground").getSize());
+                        t->addComponent<CTransform>(gridToMidPixel(m_mousePos.gridPos.x, m_mousePos.gridPos.y, t));
+                        t->addComponent<CDraggable>();
+                        t->getComponent<CDraggable>().dragging = true;
+                    }
+                }
+            }
+       
         }
         else if (action.name() == "RIGHT_CLICK")
         {

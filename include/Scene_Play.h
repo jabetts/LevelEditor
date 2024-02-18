@@ -42,7 +42,7 @@ protected:
 	PlayerConfig					m_playerConfig;
 	MousePos                        m_mousePos;
 	Menu							m_menu;
-	TileMenu                       m_tileMenu;
+	TileMenu                        m_tileMenu;
 	bool							m_drawTextures = true;
 	bool							m_drawCollision = false;
 	bool							m_drawGrid = false;

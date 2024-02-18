@@ -40,3 +40,9 @@ TileMenu::TileMenu(Assets* assets)
 	m_menuPos.y = 128;
 	loadTiles();
 }
+
+AnimationVec& TileMenu::animations()
+{
+	return m_animations;
+}
+
