@@ -61,6 +61,7 @@ protected:
 	Vec2							m_tileMenuPos;
 	sf::CircleShape					m_shape;
 	sf::View						m_view;
+	sf::Clock						m_deltaClock;
 	
 	void init(const std::string& levelPath);
 	void loadLevel(const std::string& filename);
@@ -83,6 +84,7 @@ protected:
 	void drawLine(sf::Vector2f v1, sf::Vector2f v2);
 	void updateMouseCoords(Vec2 mousePos);
 	void renderTileMenu(Vec2 pos);
+	void sMenu();
 
 	float width() const;
 	float height() const;

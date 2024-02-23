@@ -4,10 +4,15 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include "imgui.h"
+#include "imgui-SFML.h"
 #include <SFML/Graphics.hpp>
 #include "Scene.h"
 #include "Assets.h"
 #include "Scene_Play.h"
+
+#include "imgui.h"
+#include "imgui-SFML.h"
 
 
 typedef std::map<std::string, std::shared_ptr<Scene>> SceneMap;

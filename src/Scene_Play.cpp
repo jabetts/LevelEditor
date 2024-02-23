@@ -9,6 +9,9 @@
 #include <memory>
 #include <sstream>
 
+#include "imgui.h"
+#include "imgui-SFML.h"
+
 /*
  * TODOS: - Seperate view(window) for assets able to be placed in the game world
  *          these should be clicked and dragged into the game world and click again
@@ -85,6 +88,8 @@ void Scene_Play::init(const std::string& levelPath)
         {1, "M_LOAD",  'l', actionMenu},
         {1, "M_QUIT",  'q', actionMenu},
     };
+
+    m_deltaClock.restart();
 
     loadLevel(levelPath);
 }
@@ -210,7 +215,7 @@ void Scene_Play::saveLevel(const std::string& filename)
     {
         Vec2 gridPos = pixelToMidGrid(e->getComponent<CTransform>().pos.x, e->getComponent<CTransform>().pos.y, e);
         f << "Dec" << " " << e->getComponent<CAnimation>().animation.getName() << " "
-            << gridPos.x << " " << gridPos.y + 1 << std::endl;
+            << gridPos.x << " " << gridPos.y << std::endl;
     }
 
     for (auto& e : m_entityManager.getEntities("Player"))
@@ -395,7 +400,7 @@ void Scene_Play::sDoAction(const Action& action)
                         auto t = m_entityManager.addEntity("Tile");
                         t->addComponent<CAnimation>(m_game->assets().getAnimation(a->getName().c_str()), true);
                         t->addComponent<CBoundingBox>(m_game->assets().getAnimation("Ground").getSize());
-                        t->addComponent<CTransform>(gridToMidPixel(m_mousePos.gridPos.x, m_mousePos.gridPos.y, t));
+                        t->addComponent<CTransform>(gridToMidPixel((float) m_mousePos.gridPos.x, (float)m_mousePos.gridPos.y, t));
                         t->addComponent<CDraggable>();
                         t->getComponent<CDraggable>().dragging = true;
                     }
@@ -624,6 +629,8 @@ void Scene_Play::sRender()
         m_tileMenu.renderTileMenu(m_game->window());
     }
 
+    sMenu();
+
     m_game->window().display();
     m_currentFrame++;
 }
@@ -680,4 +687,25 @@ float Scene_Play::width() const
 float Scene_Play::height() const
 {
     return m_game->window().getSize().y;
+}
+
+void Scene_Play::sMenu()
+{
+    ImGui::SFML::Update(m_game->window(), m_deltaClock.restart());
+
+    ImGui::Begin("Level editor");
+    ImGui::Text("Display");
+    ImGui::Checkbox("Grid", &m_drawGrid);
+    ImGui::SameLine();
+    ImGui::Checkbox("Collisions", &m_drawCollision);
+    ImGui::SameLine();
+    ImGui::Checkbox("Textures", &m_drawTextures);
+
+// TODO: - Have an entity manager tab that shows all entities
+//       - Have a tilemap tab that allows the user to select
+//         a tile and place it anywhere on the map
+
+    ImGui::End();
+
+    ImGui::SFML::Render(m_game->window());
 }
