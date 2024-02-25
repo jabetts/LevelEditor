@@ -44,4 +44,5 @@ public:
 	bool hasEnded() const;
 	const ActionMap& getActionMap() const;
 	sf::VertexArray drawLine(const sf::Vector2f& p1, const sf::Vector2f& p2);
+	
 };

@@ -6,10 +6,15 @@
 #include "Scene.h"
 #include "Menu.h"
 #include "EntityManager.h"
+#include "GameEngine.h"
+#include "tileMenu.h"
+
+//class GameEngine;
 
 typedef sf::Vector2f Vec2f;
 typedef sf::Vector2i Vec2i;
 typedef sf::Vector2u Vec2u;
+
 
 class Scene_Play : public Scene
 {
@@ -37,6 +42,7 @@ protected:
 	PlayerConfig					m_playerConfig;
 	MousePos                        m_mousePos;
 	Menu							m_menu;
+	TileMenu                        m_tileMenu;
 	bool							m_drawTextures = true;
 	bool							m_drawCollision = false;
 	bool							m_drawGrid = false;
@@ -44,6 +50,8 @@ protected:
 	bool							m_debugFlag = false;
 	bool							m_losFlag = false;
 	bool							m_gridSnap = true;
+	bool							m_displayTileMenu = true;
+	bool							m_displaySaveWindow = false;
 	int								m_xScroll = 0;
 	int								m_scrollStep = 20;
 	int								m_mouseScrollAcc = 10;
@@ -51,13 +59,17 @@ protected:
 	sf::Text						m_debugText;
 	Vec2							m_gridSize = {64, 64};
 	Vec2							m_mPos;
+	Vec2							m_tileMenuPos;
 	sf::CircleShape					m_shape;
 	sf::View						m_view;
+	sf::Clock						m_deltaClock;
+	char                            filenameBuffer[255] = "out.txt";
 	
 	void init(const std::string& levelPath);
 	void loadLevel(const std::string& filename);
 	void loadLevel(int i);
 	void saveLevel(const std::string& filename);
+	void resetLevel();
 
 	void sAnimation();
 	void sMovement();
@@ -74,7 +86,9 @@ protected:
 	void spawnBullet(std::shared_ptr<Entity> entity);
 	void drawLine(sf::Vector2f v1, sf::Vector2f v2);
 	void updateMouseCoords(Vec2 mousePos);
-
+	void renderTileMenu(Vec2 pos);
+	void sMenu();
+	void appMainMenuBar();
 	float width() const;
 	float height() const;
 

@@ -1,6 +1,6 @@
 #include "Menu.h"
 
-void Menu::drawMenu()
+void Menu::renderMenu(sf::View view)
 {
 }
 

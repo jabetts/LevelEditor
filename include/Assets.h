@@ -30,6 +30,7 @@ public:
 	sf::Font& getFont(std::string font);
 
 	void loadFromFile(std::string path);
+	std::map<std::string, Animation> getAnimationMap();
 
 };
 

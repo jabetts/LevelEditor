@@ -1,13 +1,16 @@
 #include "Scene_Play.h"
 #include "Physics.h"
 #include "Assets.h"
-#include "GameEngine.h"
+
 #include "components.h"
 #include "Action.h"
 
 #include <iostream>
 #include <memory>
 #include <sstream>
+
+#include "imgui.h"
+#include "imgui-SFML.h"
 
 /*
  * TODOS: - Seperate view(window) for assets able to be placed in the game world
@@ -32,7 +35,7 @@
  */
 
 Scene_Play::Scene_Play(GameEngine* gameEngine, const std::string& levelPath)
-    : Scene(gameEngine), m_levelPath(levelPath)
+    : Scene(gameEngine), m_levelPath(levelPath), m_tileMenu(&m_game->assets())
 {
     init(m_levelPath);
 }
@@ -68,6 +71,7 @@ void Scene_Play::init(const std::string& levelPath)
     registerAction(sf::Keyboard::A,         "LEFT");
     registerAction(sf::Keyboard::D,         "RIGHT");
     registerAction(sf::Keyboard::S,         "DOWN");
+    registerAction(sf::Keyboard::F2,        "TILE_MENU");
 
     // Text for the grid
     m_gridText.setCharacterSize(12);
@@ -85,6 +89,8 @@ void Scene_Play::init(const std::string& levelPath)
         {1, "M_QUIT",  'q', actionMenu},
     };
 
+    m_deltaClock.restart();
+
     loadLevel(levelPath);
 }
 
@@ -97,6 +103,19 @@ bool IsInside(Vec2 pos, std::shared_ptr<Entity> e)
     float dy = fabs(pos.y - ePos.y);
 
     return (dx <= size.x / 2) && (dy <= size.y / 2);
+}
+
+bool isInsideBox(Vec2 pos, Vec2 target, size_t size)
+{
+    if (pos.x < target.x - (size / 2) || pos.x > target.x + (size / 2))
+    {
+        return false;
+    }
+    if (pos.y < (target.y - size / 2) || pos.y > target.y + (size / 2))
+    {
+        return false;
+    }
+    return true;
 }
 
 void Scene_Play::loadLevel(const std::string& filename)
@@ -174,9 +193,10 @@ void Scene_Play::saveLevel(const std::string& filename)
     std::ofstream f(filename);
     // No level file
     if (!f.is_open())
+    {
         std::cerr << "Unable to save to file.\n";
         return;
-    
+    }
 
     std::string line;
 
@@ -272,11 +292,6 @@ void Scene_Play::sMovement()
         if (e->hasComponent<CGravity>())
         {
             e->getComponent<CTransform>().velocity.y += e->getComponent<CGravity>().gravity;
-            //if (e->getComponent<CTransform>().velocity.y > m_playerConfig.MAXSPEED * 3)
-            //{
-                // Terminal velocity
-                //e->getComponent<CTransform>().velocity.y = m_playerConfig.MAXSPEED * 3;
-            //}
         }
 
         // Add the velocities to the entities
@@ -304,6 +319,14 @@ void Scene_Play::sCollision()
 
 }
 
+void Scene_Play::resetLevel()
+{
+    for (auto& e : m_entityManager.getEntities())
+    {
+        e->destroy();
+    }
+}
+
 void Scene_Play::sDoAction(const Action& action)
 {
     if (action.type() == "START")
@@ -317,6 +340,7 @@ void Scene_Play::sDoAction(const Action& action)
         else if (action.name() == "COLLISIONS") { m_collisions = !m_collisions; }
         else if (action.name() == "DEBUG") { m_debugFlag = !m_debugFlag; }
         else if (action.name() == "SAVE") { saveLevel("level2.txt"); }
+        else if (action.name() == "TILE_MENU") { m_displayTileMenu = !m_displayTileMenu; }
         
         // movement keys - basic movement and mouse acceleration if mouse with 100 pixels of each side of
         // the window. TODO: make the mouse position a percantage rather than hard coded pixels
@@ -360,8 +384,6 @@ void Scene_Play::sDoAction(const Action& action)
         // mouse actions
         else if (action.name() == "LEFT_CLICK")
         {
-            //Vec2 worldPos = windowToWorld(action.pos());
-
             for (auto e : m_entityManager.getEntities())
             {
                 if (e->hasComponent<CDraggable>() && IsInside({ m_mousePos.worldPos.x, m_mousePos.worldPos.y }, e))
@@ -370,6 +392,29 @@ void Scene_Play::sDoAction(const Action& action)
                     e->getComponent<CDraggable>().dragging = !e->getComponent<CDraggable>().dragging;
                 }
             }
+
+            if (m_displayTileMenu)
+            {
+                for (auto& a : m_tileMenu.animations())
+                {
+                    if (isInsideBox({ (float)m_mousePos.winPos.x, (float)m_mousePos.winPos.y }, { a->getSprite().getPosition().x,
+                        a->getSprite().getPosition().y }, 64))
+                    {
+                        printf("Animation selected: %s: x: %f y: %f size: %f\n", a->getName().c_str(), 
+                            a->getSprite().getPosition().x, a->getSprite().getPosition().y,
+                            a->getSize().x);
+
+                        // Create the tile entity, make it draggable and set it to dragging
+                        auto t = m_entityManager.addEntity("Tile");
+                        t->addComponent<CAnimation>(m_game->assets().getAnimation(a->getName().c_str()), true);
+                        t->addComponent<CBoundingBox>(m_game->assets().getAnimation("Ground").getSize());
+                        t->addComponent<CTransform>(gridToMidPixel((float) m_mousePos.gridPos.x, (float)m_mousePos.gridPos.y, t));
+                        t->addComponent<CDraggable>();
+                        t->getComponent<CDraggable>().dragging = true;
+                    }
+                }
+            }
+       
         }
         else if (action.name() == "RIGHT_CLICK")
         {
@@ -569,20 +614,14 @@ void Scene_Play::sRender()
     if (m_selectedEntity != nullptr)
     {
         auto& box = m_selectedEntity->getComponent<CBoundingBox>();
-        auto& transform = m_selectedEntity->getComponent<CTransform>();
-        selected.setSize(sf::Vector2f(box.size.x - 1, box.size.y - 1));
-        selected.setOrigin(sf::Vector2f(box.halfSize.x, box.halfSize.y));
-        selected.setPosition(transform.pos.x, transform.pos.y);
-        selected.setFillColor(sf::Color(0, 0, 0, 0));
-        selected.setOutlineColor(sf::Color::Green);
-        selected.setOutlineThickness(4);
-        m_game->window().draw(selected);
-    }
-    
-
-    if (m_losFlag)
-    {
-        // Draw LOS debug information
+auto& transform = m_selectedEntity->getComponent<CTransform>();
+selected.setSize(sf::Vector2f(box.size.x - 1, box.size.y - 1));
+selected.setOrigin(sf::Vector2f(box.halfSize.x, box.halfSize.y));
+selected.setPosition(transform.pos.x, transform.pos.y);
+selected.setFillColor(sf::Color(0, 0, 0, 0));
+selected.setOutlineColor(sf::Color::Green);
+selected.setOutlineThickness(4);
+m_game->window().draw(selected);
     }
 
     // UI highlights - these need to be drawn in view after everything else.
@@ -592,18 +631,22 @@ void Scene_Play::sRender()
     // Static UI elements
     m_game->window().setView(ui);
     m_game->window().draw(m_debugText);
+    // draw tile menu
+    if (m_displayTileMenu)
+    {
+        m_tileMenu.renderTileMenu(m_game->window());
+    }
+
+    sMenu();
 
     m_game->window().display();
     m_currentFrame++;
 }
 
-
 void Scene_Play::sDebug()
 {
 }
 
-
-// TODO: Fix this as y is reversed.
 void Scene_Play::sDrag()
 {
     for (auto e : m_entityManager.getEntities())
@@ -636,7 +679,7 @@ void Scene_Play::updateMouseCoords(Vec2 mousePos)
 {
     m_game->window().setView(m_view);
     m_mousePos.screenPos = sf::Mouse::getPosition();
-    m_mousePos.winPos = {static_cast<int>(mousePos.x), static_cast<int>(mousePos.y)};
+    m_mousePos.winPos = { static_cast<int>(mousePos.x), static_cast<int>(mousePos.y) };
     m_mousePos.worldPos = m_game->window().mapPixelToCoords(m_mousePos.winPos);
     m_mousePos.gridPos.x = m_mousePos.worldPos.x / m_gridSize.x;
     m_mousePos.gridPos.y = static_cast<int>((height()) - m_mousePos.worldPos.y) / m_gridSize.y;
@@ -651,3 +694,141 @@ float Scene_Play::height() const
 {
     return m_game->window().getSize().y;
 }
+
+void Scene_Play::sMenu()
+{
+    ImGui::SFML::Update(m_game->window(), m_deltaClock.restart());
+    ImGuiWindowFlags window_flags = 0;
+    bool show_window = true;
+
+    ImGui::Begin("Level editor", &show_window, ImGuiWindowFlags_MenuBar);
+        ImGui::Text("Display");
+        ImGui::Checkbox("Grid", &m_drawGrid);
+        ImGui::SameLine();
+        ImGui::Checkbox("Collisions", &m_drawCollision);
+        ImGui::SameLine();
+        ImGui::Checkbox("Textures", &m_drawTextures);
+        
+    if (ImGui::BeginMenuBar())
+    {
+        if (ImGui::BeginMenu("File"))
+        {
+            if (ImGui::MenuItem("New"))
+            {
+
+            }
+            if (ImGui::MenuItem("Open"))
+            {
+
+            }
+            if (ImGui::BeginMenu("Open Recent"))
+            {
+                // TODO: Create open recent function which will
+                //       load a text file with last 5 levels opened
+                ImGui::MenuItem("Level1.txt");
+                ImGui::EndMenu();
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Save"))
+            {
+                saveLevel(filenameBuffer);
+                m_displaySaveWindow = false;
+            }
+            if (ImGui::MenuItem("Save as.."))
+            {
+                m_displaySaveWindow = true;
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Quit"))
+            {
+
+            }
+            ImGui::EndMenu();
+        }
+        ImGui::EndMenuBar();
+    }
+
+    ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
+    if (ImGui::BeginTabBar("MyTabBar", tab_bar_flags))
+    {
+        ImGuiIO& io = ImGui::GetIO();
+        ImTextureID my_tex_id = io.Fonts->TexID;
+        float my_tex_w = (float)io.Fonts->TexWidth;
+        float my_tex_h = (float)io.Fonts->TexHeight;
+
+        if (ImGui::BeginTabItem("Tiles"))
+        {
+            for (int i = 0; i < 8; i++)
+            {
+                const sf::Sprite& player = m_player->getComponent<CAnimation>().animation.getSprite();
+                const sf::Vector2f size(65.0f, 65.0f);
+                
+                // UV coordinates are often (0.0f, 0.0f) and (1.0f, 1.0f) to display an entire textures.
+                // Here are trying to display only a 32x32 pixels area of the texture, hence the UV computation.
+                // Read about UV coordinates here: https://github.com/ocornut/imgui/wiki/Image-Loading-and-Displaying-Examples
+                ImGui::PushID(i);
+                if (i > 0)
+                    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(i - 1.0f, i - 1.0f));
+               
+                ImVec2 uv0 = ImVec2(0.0f, 0.0f);                            // UV coordinates for lower-left
+                ImVec2 uv1 = ImVec2(32.0f / 64, 32.0f / 64);                // UV coordinates for (32,32) in our texture
+                ImVec4 bg_col = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);             // Black background
+                ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);           // No tint
+                
+                /* bool ImageButton(const char* id, const sf::Sprite & sprite, const sf::Vector2f & size,
+                    const sf::Color & bgColor, const sf::Color & tintColor) {
+                    */
+                
+                if (ImGui::ImageButton("player", player, size, sf::Color::Transparent, sf::Color(255, 255, 255)))
+                {
+
+                }
+     
+                if (i > 0)
+                    ImGui::PopStyleVar();
+                ImGui::PopID();
+                ImGui::SameLine();
+            }
+            ImGui::NewLine();
+            ImGui::EndTabItem();
+        }
+        if (ImGui::BeginTabItem("Decorations"))
+        {
+            ImGui::EndTabItem();
+        }
+        if (ImGui::BeginTabItem("Entities"))
+        {
+            ImGui::EndTabItem();
+        }
+        ImGui::EndTabBar();
+    }
+
+    if (m_displaySaveWindow)
+    {
+        if (ImGui::Begin("Save level"))
+        {
+            ImGui::InputText("##file name:", filenameBuffer, IM_ARRAYSIZE(filenameBuffer));
+            
+            if (ImGui::Button("Save"))
+            {
+                saveLevel(filenameBuffer);
+                m_displaySaveWindow = false;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Cancel"))
+            {
+                m_displaySaveWindow = false;
+            }
+        }
+        ImGui::End();
+    }
+
+    // TODO: - Have an entity manager tab that shows all entities
+    //       - Have a tilemap tab that allows the user to select
+    //         a tile and place it anywhere on the map
+
+    ImGui::End();
+
+    ImGui::SFML::Render(m_game->window());
+}
+
