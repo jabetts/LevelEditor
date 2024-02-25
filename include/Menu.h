@@ -18,6 +18,7 @@ class Menu
 	float						m_x, m_y;			// x, y of top left of menu in window coords
 	short						m_lastOn    = 0;	// last menu item the user was on
 	short						m_itemOn    = 0;    // item the icon is on
+	sf::Font					m_font;
 
 public:
 	struct MenuItem
@@ -40,6 +41,7 @@ public:
 
 	void setItems(MenuItem* menuItems);
 	void renderMenu(sf::View view);
-	void setIconOffset(int);
+	void setIconOffset(int iconOffset);
+	void setFont(sf::Font font);
 };
 
