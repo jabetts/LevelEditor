@@ -753,43 +753,35 @@ void Scene_Play::sMenu()
     {
         ImGuiIO& io = ImGui::GetIO();
         ImTextureID my_tex_id = io.Fonts->TexID;
-        float my_tex_w = (float)io.Fonts->TexWidth;
-        float my_tex_h = (float)io.Fonts->TexHeight;
+        //float my_tex_w = (float)io.Fonts->TexWidth;
+        //float my_tex_h = (float)io.Fonts->TexHeight;
 
         if (ImGui::BeginTabItem("Tiles"))
         {
-            for (int i = 0; i < 8; i++)
-            {
-                const sf::Sprite& player = m_player->getComponent<CAnimation>().animation.getSprite();
-                const sf::Vector2f size(65.0f, 65.0f);
-                
-                // UV coordinates are often (0.0f, 0.0f) and (1.0f, 1.0f) to display an entire textures.
-                // Here are trying to display only a 32x32 pixels area of the texture, hence the UV computation.
-                // Read about UV coordinates here: https://github.com/ocornut/imgui/wiki/Image-Loading-and-Displaying-Examples
-                ImGui::PushID(i);
-                if (i > 0)
-                    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(i - 1.0f, i - 1.0f));
-               
-                ImVec2 uv0 = ImVec2(0.0f, 0.0f);                            // UV coordinates for lower-left
-                ImVec2 uv1 = ImVec2(32.0f / 64, 32.0f / 64);                // UV coordinates for (32,32) in our texture
-                ImVec4 bg_col = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);             // Black background
-                ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);           // No tint
-                
-                /* bool ImageButton(const char* id, const sf::Sprite & sprite, const sf::Vector2f & size,
-                    const sf::Color & bgColor, const sf::Color & tintColor) {
-                    */
-                
-                if (ImGui::ImageButton("player", player, size, sf::Color::Transparent, sf::Color(255, 255, 255)))
-                {
+            const sf::Texture& brick = m_game->assets().getTexture("Brick");
+            const sf::Texture& ground = m_game->assets().getTexture("Ground");
+            const sf::Texture& block = m_game->assets().getTexture("Block");
+            const sf::Vector2f size(65.0f, 65.0f);
 
-                }
-     
-                if (i > 0)
-                    ImGui::PopStyleVar();
-                ImGui::PopID();
-                ImGui::SameLine();
+            // UV coordinates are often (0.0f, 0.0f) and (1.0f, 1.0f) to display an entire textures.
+            // Here are trying to display only a 32x32 pixels area of the texture, hence the UV computation.
+            // Read about UV coordinates here: https://github.com/ocornut/imgui/wiki/Image-Loading-and-Displaying-Examples
+
+            if (ImGui::ImageButton("Brick", brick, size, sf::Color::Transparent, sf::Color(255, 255, 255)))
+            {
+
             }
-            ImGui::NewLine();
+            ImGui::SameLine();
+            if (ImGui::ImageButton("Ground", ground, size, sf::Color::Transparent, sf::Color(255, 255, 255)))
+            {
+
+            }
+            ImGui::SameLine();
+            if (ImGui::ImageButton("Block", block, size, sf::Color::Transparent, sf::Color(255, 255, 255)))
+            {
+
+            }
+            
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("Decorations"))
