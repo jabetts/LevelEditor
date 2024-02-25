@@ -8,7 +8,18 @@ void GameEngine::init(const std::string& path)
 	m_window.create(sf::VideoMode(1920, 1080), "Level Editor");
 	m_window.setFramerateLimit(60);
 	m_window.setVerticalSyncEnabled(true);
-	ImGui::SFML::Init(m_window);
+	
+	// calling false as not wanting default fonts
+	ImGui::SFML::Init(m_window, false);
+	// Get the ImGui IO
+	auto &IO = ImGui::GetIO();
+	IO.Fonts->Clear();
+	// Load font for ImGui
+	IO.Fonts->AddFontFromFileTTF("assets/Mario.ttf", 20.f);
+	ImGui::SFML::UpdateFontTexture();
+	//ImGui::PushFont(IO.Fonts->Fonts[0]);
+	IO.FontGlobalScale = 1.0f;
+	ImGui::StyleColorsClassic();
 
 	changeScene("play", std::make_shared<Scene_Play>(this, "level1.txt"), true);
 }

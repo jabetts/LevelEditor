@@ -319,6 +319,14 @@ void Scene_Play::sCollision()
 
 }
 
+void Scene_Play::resetLevel()
+{
+    for (auto& e : m_entityManager.getEntities())
+    {
+        e->destroy();
+    }
+}
+
 void Scene_Play::sDoAction(const Action& action)
 {
     if (action.type() == "START")
@@ -606,14 +614,14 @@ void Scene_Play::sRender()
     if (m_selectedEntity != nullptr)
     {
         auto& box = m_selectedEntity->getComponent<CBoundingBox>();
-        auto& transform = m_selectedEntity->getComponent<CTransform>();
-        selected.setSize(sf::Vector2f(box.size.x - 1, box.size.y - 1));
-        selected.setOrigin(sf::Vector2f(box.halfSize.x, box.halfSize.y));
-        selected.setPosition(transform.pos.x, transform.pos.y);
-        selected.setFillColor(sf::Color(0, 0, 0, 0));
-        selected.setOutlineColor(sf::Color::Green);
-        selected.setOutlineThickness(4);
-        m_game->window().draw(selected);
+auto& transform = m_selectedEntity->getComponent<CTransform>();
+selected.setSize(sf::Vector2f(box.size.x - 1, box.size.y - 1));
+selected.setOrigin(sf::Vector2f(box.halfSize.x, box.halfSize.y));
+selected.setPosition(transform.pos.x, transform.pos.y);
+selected.setFillColor(sf::Color(0, 0, 0, 0));
+selected.setOutlineColor(sf::Color::Green);
+selected.setOutlineThickness(4);
+m_game->window().draw(selected);
     }
 
     // UI highlights - these need to be drawn in view after everything else.
@@ -639,8 +647,6 @@ void Scene_Play::sDebug()
 {
 }
 
-
-// TODO: Fix this as y is reversed.
 void Scene_Play::sDrag()
 {
     for (auto e : m_entityManager.getEntities())
@@ -673,7 +679,7 @@ void Scene_Play::updateMouseCoords(Vec2 mousePos)
 {
     m_game->window().setView(m_view);
     m_mousePos.screenPos = sf::Mouse::getPosition();
-    m_mousePos.winPos = {static_cast<int>(mousePos.x), static_cast<int>(mousePos.y)};
+    m_mousePos.winPos = { static_cast<int>(mousePos.x), static_cast<int>(mousePos.y) };
     m_mousePos.worldPos = m_game->window().mapPixelToCoords(m_mousePos.winPos);
     m_mousePos.gridPos.x = m_mousePos.worldPos.x / m_gridSize.x;
     m_mousePos.gridPos.y = static_cast<int>((height()) - m_mousePos.worldPos.y) / m_gridSize.y;
@@ -692,20 +698,137 @@ float Scene_Play::height() const
 void Scene_Play::sMenu()
 {
     ImGui::SFML::Update(m_game->window(), m_deltaClock.restart());
+    ImGuiWindowFlags window_flags = 0;
+    bool show_window = true;
 
-    ImGui::Begin("Level editor");
-    ImGui::Text("Display");
-    ImGui::Checkbox("Grid", &m_drawGrid);
-    ImGui::SameLine();
-    ImGui::Checkbox("Collisions", &m_drawCollision);
-    ImGui::SameLine();
-    ImGui::Checkbox("Textures", &m_drawTextures);
+    ImGui::Begin("Level editor", &show_window, ImGuiWindowFlags_MenuBar);
+        ImGui::Text("Display");
+        ImGui::Checkbox("Grid", &m_drawGrid);
+        ImGui::SameLine();
+        ImGui::Checkbox("Collisions", &m_drawCollision);
+        ImGui::SameLine();
+        ImGui::Checkbox("Textures", &m_drawTextures);
+        
+    if (ImGui::BeginMenuBar())
+    {
+        if (ImGui::BeginMenu("File"))
+        {
+            if (ImGui::MenuItem("New"))
+            {
 
-// TODO: - Have an entity manager tab that shows all entities
-//       - Have a tilemap tab that allows the user to select
-//         a tile and place it anywhere on the map
+            }
+            if (ImGui::MenuItem("Open"))
+            {
+
+            }
+            if (ImGui::BeginMenu("Open Recent"))
+            {
+                // TODO: Create open recent function which will
+                //       load a text file with last 5 levels opened
+                ImGui::MenuItem("Level1.txt");
+                ImGui::EndMenu();
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Save"))
+            {
+                saveLevel(filenameBuffer);
+                m_displaySaveWindow = false;
+            }
+            if (ImGui::MenuItem("Save as.."))
+            {
+                m_displaySaveWindow = true;
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Quit"))
+            {
+
+            }
+            ImGui::EndMenu();
+        }
+        ImGui::EndMenuBar();
+    }
+
+    ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
+    if (ImGui::BeginTabBar("MyTabBar", tab_bar_flags))
+    {
+        ImGuiIO& io = ImGui::GetIO();
+        ImTextureID my_tex_id = io.Fonts->TexID;
+        float my_tex_w = (float)io.Fonts->TexWidth;
+        float my_tex_h = (float)io.Fonts->TexHeight;
+
+        if (ImGui::BeginTabItem("Tiles"))
+        {
+            for (int i = 0; i < 8; i++)
+            {
+                const sf::Sprite& player = m_player->getComponent<CAnimation>().animation.getSprite();
+                const sf::Vector2f size(65.0f, 65.0f);
+                
+                // UV coordinates are often (0.0f, 0.0f) and (1.0f, 1.0f) to display an entire textures.
+                // Here are trying to display only a 32x32 pixels area of the texture, hence the UV computation.
+                // Read about UV coordinates here: https://github.com/ocornut/imgui/wiki/Image-Loading-and-Displaying-Examples
+                ImGui::PushID(i);
+                if (i > 0)
+                    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(i - 1.0f, i - 1.0f));
+               
+                ImVec2 uv0 = ImVec2(0.0f, 0.0f);                            // UV coordinates for lower-left
+                ImVec2 uv1 = ImVec2(32.0f / 64, 32.0f / 64);                // UV coordinates for (32,32) in our texture
+                ImVec4 bg_col = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);             // Black background
+                ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);           // No tint
+                
+                /* bool ImageButton(const char* id, const sf::Sprite & sprite, const sf::Vector2f & size,
+                    const sf::Color & bgColor, const sf::Color & tintColor) {
+                    */
+                
+                if (ImGui::ImageButton("player", player, size, sf::Color::Transparent, sf::Color(255, 255, 255)))
+                {
+
+                }
+     
+                if (i > 0)
+                    ImGui::PopStyleVar();
+                ImGui::PopID();
+                ImGui::SameLine();
+            }
+            ImGui::NewLine();
+            ImGui::EndTabItem();
+        }
+        if (ImGui::BeginTabItem("Decorations"))
+        {
+            ImGui::EndTabItem();
+        }
+        if (ImGui::BeginTabItem("Entities"))
+        {
+            ImGui::EndTabItem();
+        }
+        ImGui::EndTabBar();
+    }
+
+    if (m_displaySaveWindow)
+    {
+        if (ImGui::Begin("Save level"))
+        {
+            ImGui::InputText("##file name:", filenameBuffer, IM_ARRAYSIZE(filenameBuffer));
+            
+            if (ImGui::Button("Save"))
+            {
+                saveLevel(filenameBuffer);
+                m_displaySaveWindow = false;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Cancel"))
+            {
+                m_displaySaveWindow = false;
+            }
+        }
+        ImGui::End();
+    }
+
+    // TODO: - Have an entity manager tab that shows all entities
+    //       - Have a tilemap tab that allows the user to select
+    //         a tile and place it anywhere on the map
 
     ImGui::End();
 
     ImGui::SFML::Render(m_game->window());
 }
+
