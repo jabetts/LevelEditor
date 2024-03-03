@@ -78,6 +78,9 @@
     <ClCompile Include="imgui\imgui.cpp">
       <Filter>Header Files</Filter>
     </ClCompile>
+    <ClCompile Include="ImGuiMenu.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Action.h">
@@ -151,6 +154,12 @@
     </ClInclude>
     <ClInclude Include="imgui\imconfig-SFML.h">
       <Filter>IMGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\rang.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGuiMenu.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

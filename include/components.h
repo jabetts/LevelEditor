@@ -73,6 +73,11 @@ struct CAttributes
 	CAttributes() {}
 };
 
+struct CTileAttributes : public Component
+{
+	std::string tileType = "none";
+};
+
 struct CBoundingBox : public Component
 {
 	Vec2 size;

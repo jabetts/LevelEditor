@@ -1,5 +1,5 @@
 #include "Assets.h"
-
+#include "rang.h"
 Assets::Assets()
 {
 
@@ -54,7 +54,7 @@ void Assets::loadFromFile(std::string path)
 		exit(1);
 	}
 
-	std::cout << "Loading assets:\n";
+	std::cout << rang::style::bold << rang::fg::yellow << "Loading assets:\n" << rang::style::reset << rang::fg::reset;
 	std::string in;
 	std::string p;
 	while (f >> in)

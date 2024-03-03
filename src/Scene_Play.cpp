@@ -4,6 +4,7 @@
 
 #include "components.h"
 #include "Action.h"
+#include "rang.h"
 
 #include <iostream>
 #include <memory>
@@ -31,7 +32,6 @@
  *           - renderer.renderMenu
  *          This will require some planning and thought how I want to acheive this, but can then
  *          be used in other games
- *        - Menu, can base this on the menu system used in the DOOM source code for learning
  */
 
 Scene_Play::Scene_Play(GameEngine* gameEngine, const std::string& levelPath)
@@ -131,7 +131,7 @@ void Scene_Play::loadLevel(const std::string& filename)
         return;
     }
 
-    std::cout << "Loading level\n";
+    std::cout << rang::fg::yellow << rang::style::bold << "Loading level\n" << rang::style::reset;
     std::string line;
     
     while (std::getline(f, line))
@@ -178,7 +178,7 @@ void Scene_Play::loadLevel(const std::string& filename)
     }
     if (f.is_open()) { f.close(); }
     int time = clock.getElapsedTime().asMilliseconds();
-    std::cout << "Level loaded in: " << time << " milliseconds\n";
+    std::cout << rang::style::bold << rang::fg::yellow << "Level loaded in: " << time << " milliseconds\n" << rang::style::reset;
 }
 
 void Scene_Play::loadLevel(int i)
@@ -281,6 +281,7 @@ void Scene_Play::update()
         sDrag();
     }
     m_currentFrame++;
+    //sMenu();
     sRender();
 }
 
@@ -614,14 +615,14 @@ void Scene_Play::sRender()
     if (m_selectedEntity != nullptr)
     {
         auto& box = m_selectedEntity->getComponent<CBoundingBox>();
-auto& transform = m_selectedEntity->getComponent<CTransform>();
-selected.setSize(sf::Vector2f(box.size.x - 1, box.size.y - 1));
-selected.setOrigin(sf::Vector2f(box.halfSize.x, box.halfSize.y));
-selected.setPosition(transform.pos.x, transform.pos.y);
-selected.setFillColor(sf::Color(0, 0, 0, 0));
-selected.setOutlineColor(sf::Color::Green);
-selected.setOutlineThickness(4);
-m_game->window().draw(selected);
+        auto& transform = m_selectedEntity->getComponent<CTransform>();
+        selected.setSize(sf::Vector2f(box.size.x - 1, box.size.y - 1));
+        selected.setOrigin(sf::Vector2f(box.halfSize.x, box.halfSize.y));
+        selected.setPosition(transform.pos.x, transform.pos.y);
+        selected.setFillColor(sf::Color(0, 0, 0, 0));
+        selected.setOutlineColor(sf::Color::Green);
+        selected.setOutlineThickness(4);
+        m_game->window().draw(selected);
     }
 
     // UI highlights - these need to be drawn in view after everything else.
@@ -634,7 +635,7 @@ m_game->window().draw(selected);
     // draw tile menu
     if (m_displayTileMenu)
     {
-        m_tileMenu.renderTileMenu(m_game->window());
+        //m_tileMenu.renderTileMenu(m_game->window());
     }
 
     sMenu();
@@ -702,13 +703,15 @@ void Scene_Play::sMenu()
     bool show_window = true;
 
     ImGui::Begin("Level editor", &show_window, ImGuiWindowFlags_MenuBar);
-        ImGui::Text("Display");
-        ImGui::Checkbox("Grid", &m_drawGrid);
-        ImGui::SameLine();
-        ImGui::Checkbox("Collisions", &m_drawCollision);
-        ImGui::SameLine();
-        ImGui::Checkbox("Textures", &m_drawTextures);
+    ImGui::Text("Display");
+    ImGui::Checkbox("Grid", &m_drawGrid);
+    ImGui::SameLine();
+    ImGui::Checkbox("Collisions", &m_drawCollision);
+    ImGui::SameLine();
+    ImGui::Checkbox("Textures", &m_drawTextures);
         
+    ImVec2 windowSize = ImGui::GetWindowSize();
+
     if (ImGui::BeginMenuBar())
     {
         if (ImGui::BeginMenu("File"))
@@ -753,35 +756,88 @@ void Scene_Play::sMenu()
     {
         ImGuiIO& io = ImGui::GetIO();
         ImTextureID my_tex_id = io.Fonts->TexID;
-        //float my_tex_w = (float)io.Fonts->TexWidth;
-        //float my_tex_h = (float)io.Fonts->TexHeight;
 
         if (ImGui::BeginTabItem("Tiles"))
         {
             const sf::Texture& brick = m_game->assets().getTexture("Brick");
             const sf::Texture& ground = m_game->assets().getTexture("Ground");
             const sf::Texture& block = m_game->assets().getTexture("Block");
+            const sf::Texture& basalt = m_game->assets().getTexture("Basalt");
             const sf::Vector2f size(65.0f, 65.0f);
 
             // UV coordinates are often (0.0f, 0.0f) and (1.0f, 1.0f) to display an entire textures.
             // Here are trying to display only a 32x32 pixels area of the texture, hence the UV computation.
             // Read about UV coordinates here: https://github.com/ocornut/imgui/wiki/Image-Loading-and-Displaying-Examples
+           
+            /* TODO: Manual button wrapping
+            ImGui::Text("Manual wrapping:");
+            ImGuiStyle& style = ImGui::GetStyle();
+            int buttons_count = 20;
+            float window_visible_x2 = ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x;
+            for (int n = 0; n < buttons_count; n++)
+            {
+                ImGui::PushID(n);
+                ImGui::Button("Box", button_sz);
+                float last_button_x2 = ImGui::GetItemRectMax().x;
+                float next_button_x2 = last_button_x2 + style.ItemSpacing.x + button_sz.x; // Expected position if next button was on same line
+                if (n + 1 < buttons_count && next_button_x2 < window_visible_x2)
+                    ImGui::SameLine();
+                ImGui::PopID();
+            }
+            */
 
             if (ImGui::ImageButton("Brick", brick, size, sf::Color::Transparent, sf::Color(255, 255, 255)))
             {
-
+                auto t = m_entityManager.addEntity("Tile");
+                t->addComponent<CAnimation>(m_game->assets().getAnimation("Brick"), true);
+                t->addComponent<CBoundingBox>(m_game->assets().getAnimation("Brick").getSize());
+                t->addComponent<CTransform>(gridToMidPixel((float)m_mousePos.gridPos.x, (float)m_mousePos.gridPos.y, t));
+                t->addComponent<CDraggable>();
+                t->getComponent<CDraggable>().dragging = true;
             }
             ImGui::SameLine();
             if (ImGui::ImageButton("Ground", ground, size, sf::Color::Transparent, sf::Color(255, 255, 255)))
             {
-
+                auto t = m_entityManager.addEntity("Tile");
+                t->addComponent<CAnimation>(m_game->assets().getAnimation("Ground"), true);
+                t->addComponent<CBoundingBox>(m_game->assets().getAnimation("Ground").getSize());
+                t->addComponent<CTransform>(gridToMidPixel((float)m_mousePos.gridPos.x, (float)m_mousePos.gridPos.y, t));
+                t->addComponent<CDraggable>();
+                t->getComponent<CDraggable>().dragging = true;
             }
             ImGui::SameLine();
             if (ImGui::ImageButton("Block", block, size, sf::Color::Transparent, sf::Color(255, 255, 255)))
             {
-
+                auto t = m_entityManager.addEntity("Tile");
+                t->addComponent<CBoundingBox>(m_game->assets().getAnimation("Block").getSize());
+                t->addComponent<CAnimation>(m_game->assets().getAnimation("Block"), true);
+                t->addComponent<CTransform>(gridToMidPixel((float)m_mousePos.gridPos.x, (float)m_mousePos.gridPos.y, t));
+                t->addComponent<CDraggable>();
+                t->getComponent<CDraggable>().dragging = true;
             }
-            
+            ImGui::SameLine();
+            if (ImGui::ImageButton("Basalt", m_game->assets().getAnimation("Basalt").getSprite(), 
+                size, sf::Color::Transparent, sf::Color(255, 255, 255)))
+            {
+                auto t = m_entityManager.addEntity("Tile");
+                t->addComponent<CAnimation>(m_game->assets().getAnimation("Basalt"), true);
+                t->addComponent<CBoundingBox>(m_game->assets().getAnimation("basalt").getSize());
+                t->addComponent<CTransform>(gridToMidPixel((float)m_mousePos.gridPos.x, (float)m_mousePos.gridPos.y, t));
+                t->addComponent<CDraggable>();
+                t->getComponent<CDraggable>().dragging = true;
+            }
+            ImGui::SameLine();
+            if (ImGui::ImageButton("QuestionFull", m_game->assets().getAnimation("QuestionFull").getSprite(), 
+                size, sf::Color::Transparent, sf::Color(255, 255, 255)))
+            {
+                auto t = m_entityManager.addEntity("Tile");
+                t->addComponent<CBoundingBox>(m_game->assets().getAnimation("QuestionFull").getSize());
+                t->addComponent<CAnimation>(m_game->assets().getAnimation("QuestionFull"), true);
+                t->addComponent<CTransform>(gridToMidPixel((float)m_mousePos.gridPos.x, (float)m_mousePos.gridPos.y, t));
+                t->addComponent<CDraggable>();
+                t->getComponent<CDraggable>().dragging = true;
+            }
+          
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("Decorations"))
@@ -790,6 +846,25 @@ void Scene_Play::sMenu()
         }
         if (ImGui::BeginTabItem("Entities"))
         {
+            ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
+            ImGuiWindowFlags window_flags = ImGuiWindowFlags_HorizontalScrollbar;
+            ImGui::BeginChild("EntityList", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y), ImGuiChildFlags_None, window_flags);
+            
+            for (auto& e : m_entityManager.getEntities())
+            {
+                ImGui::Text("%04d", e->id());
+                ImGui::SameLine();
+                if (ImGui::ImageButton("Entity##", e->getComponent<CAnimation>().animation.getSprite(), 
+                    sf::Vector2f(24,24), sf::Color::Transparent, sf::Color(255, 255, 255)))
+                {
+                    //e->destroy();
+                }
+            }
+            //for (int i = 0; i < 100; i++)
+            //    ImGui::Text("%04d: scrollable region", i);
+            ImGui::EndChild();
+            ImGui::PopStyleVar();
+
             ImGui::EndTabItem();
         }
         ImGui::EndTabBar();
