@@ -699,8 +699,13 @@ float Scene_Play::height() const
 void Scene_Play::sMenu()
 {
     ImGui::SFML::Update(m_game->window(), m_deltaClock.restart());
+
     ImGuiWindowFlags window_flags = 0;
     bool show_window = true;
+    int windowWidth = 550;
+
+    ImGui::SetNextWindowSize(ImVec2(windowWidth, ImGui::GetIO().DisplaySize.y));
+    ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - windowWidth, 0));
 
     ImGui::Begin("Level editor", &show_window, ImGuiWindowFlags_MenuBar);
     ImGui::Text("Display");
@@ -850,15 +855,38 @@ void Scene_Play::sMenu()
             ImGuiWindowFlags window_flags = ImGuiWindowFlags_HorizontalScrollbar;
             ImGui::BeginChild("EntityList", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y), ImGuiChildFlags_None, window_flags);
             
+            ImGui::Columns(5, "entitycolumns");
+            ImGui::SetColumnWidth(0, 100);
+            ImGui::SetColumnWidth(1, 50);
+            ImGui::SetColumnWidth(2, 100);
+            //ImGui::SetColumnWidth(3, 75);
+
+            ImGui::Separator();
+            ImGui::Text("Id"); ImGui::NextColumn();
+            ImGui::Text("D"); ImGui::NextColumn();
+            ImGui::Text("Pos"); ImGui::NextColumn();
+            ImGui::Text("Tag"); ImGui::NextColumn();
+            ImGui::Text("Name"); ImGui::NextColumn();
+            ImGui::Separator();
+
             for (auto& e : m_entityManager.getEntities())
             {
                 ImGui::Text("%04d", e->id());
-                ImGui::SameLine();
+                ImGui::NextColumn();
                 if (ImGui::ImageButton("Entity##", e->getComponent<CAnimation>().animation.getSprite(), 
                     sf::Vector2f(24,24), sf::Color::Transparent, sf::Color(255, 255, 255)))
                 {
                     //e->destroy();
                 }
+                ImGui::NextColumn();
+                //Vec2 pos(e->getComponent<CTransform>().pos.x, e->getComponent<CTransform>().pos.y);
+                Vec2 pos = pixelToMidGrid(e->getComponent<CTransform>().pos.x, e->getComponent<CTransform>().pos.y, e);
+                ImGui::Text("%d %d", (int)pos.x, (int)pos.y);
+                ImGui::NextColumn();
+                ImGui::Text("%s", e->tag().c_str());
+                ImGui::NextColumn();
+                ImGui::Text("%s", e->getComponent<CAnimation>().animation.getName().c_str());
+                ImGui::NextColumn();
             }
             //for (int i = 0; i < 100; i++)
             //    ImGui::Text("%04d: scrollable region", i);
