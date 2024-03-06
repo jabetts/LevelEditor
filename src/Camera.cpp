@@ -21,7 +21,7 @@ void Camera::setPos(Vec2 pos)
 void Camera::update()
 {
 	float viewX = std::max(m_viewPos.x + m_vel.x, m_window->getSize().x / 2.0f);
-	m_view.setCenter(viewX, m_window->getSize().y / 2);
+	m_view.setCenter(viewX, (float)m_window->getSize().y / 2);
 	m_window->setView(m_view);
 }
 Camera::~Camera()

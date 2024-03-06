@@ -15,14 +15,13 @@ typedef sf::Vector2f Vec2f;
 typedef sf::Vector2i Vec2i;
 typedef sf::Vector2u Vec2u;
 
-
 class Scene_Play : public Scene
 {
 	// This is used to configure the player start location, speed, gravity etc.
 	// it is written to the level file and is loaded by hte level loader
 	struct PlayerConfig
 	{
-		float X, Y, CW, CH, SPEED, MAXSPEED, JUMP, GRAVITY;
+		float X = 0, Y = 0, CW = 0, CH = 0, SPEED = 0, MAXSPEED = 0, JUMP = 0, GRAVITY = 0;
 		std::string WEAPON;
 	};
 

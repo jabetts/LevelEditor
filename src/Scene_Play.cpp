@@ -42,10 +42,7 @@ Scene_Play::Scene_Play(GameEngine* gameEngine, const std::string& levelPath)
 
 void actionMenu(int n)
 {
-    switch (n)
-    {
-
-    }
+    
 }
 
 void Scene_Play::init(const std::string& levelPath)
@@ -79,19 +76,15 @@ void Scene_Play::init(const std::string& levelPath)
     m_debugText.setFont(m_game->assets().getFont("Hack"));
 
     // Initialise starting point of the main view
-    m_xScroll = width() / 2; 
-
-    // Initialise Menu system
-    Menu::MenuItem mainMenu[] = {
-        {1, "M_NLEVEL",'n', actionMenu},
-        {1, "M_SAVE",  's', actionMenu},
-        {1, "M_LOAD",  'l', actionMenu},
-        {1, "M_QUIT",  'q', actionMenu},
-    };
+    m_xScroll = (int)width() / 2; 
 
     m_deltaClock.restart();
 
+    m_menu = Menu(m_game, &m_entityManager);
+
     loadLevel(levelPath);
+
+    
 }
 
 // Check if a point is inside an entity
@@ -656,7 +649,7 @@ void Scene_Play::sDrag()
         {
             Vec2 worldPos = windowToWorld(m_mPos);
             Vec2 gridPos = pixelToMidGrid(worldPos.x, worldPos.y, e);
-            e->getComponent<CTransform>().pos = gridToMidPixel(m_mousePos.gridPos.x, m_mousePos.gridPos.y, e);
+            e->getComponent<CTransform>().pos = gridToMidPixel((float)m_mousePos.gridPos.x, (float)m_mousePos.gridPos.y, e);
         }
     }
 }
@@ -682,18 +675,18 @@ void Scene_Play::updateMouseCoords(Vec2 mousePos)
     m_mousePos.screenPos = sf::Mouse::getPosition();
     m_mousePos.winPos = { static_cast<int>(mousePos.x), static_cast<int>(mousePos.y) };
     m_mousePos.worldPos = m_game->window().mapPixelToCoords(m_mousePos.winPos);
-    m_mousePos.gridPos.x = m_mousePos.worldPos.x / m_gridSize.x;
-    m_mousePos.gridPos.y = static_cast<int>((height()) - m_mousePos.worldPos.y) / m_gridSize.y;
+    m_mousePos.gridPos.x = (int)m_mousePos.worldPos.x / (int)m_gridSize.x;
+    m_mousePos.gridPos.y = (int)((height()) - (int)m_mousePos.worldPos.y) / (int)m_gridSize.y;
 }
 
 float Scene_Play::width() const
 {
-    return m_game->window().getSize().x;
+    return (float)m_game->window().getSize().x;
 }
 
 float Scene_Play::height() const
 {
-    return m_game->window().getSize().y;
+    return (float)m_game->window().getSize().y;
 }
 
 void Scene_Play::sMenu()
@@ -704,8 +697,10 @@ void Scene_Play::sMenu()
     bool show_window = true;
     int windowWidth = 550;
 
-    ImGui::SetNextWindowSize(ImVec2(windowWidth, ImGui::GetIO().DisplaySize.y));
+    ImGui::SetNextWindowSize(ImVec2((float)windowWidth, ImGui::GetIO().DisplaySize.y));
     ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - windowWidth, 0));
+
+    // Begin main window
 
     ImGui::Begin("Level editor", &show_window, ImGuiWindowFlags_MenuBar);
     ImGui::Text("Display");
@@ -849,8 +844,13 @@ void Scene_Play::sMenu()
         {
             ImGui::EndTabItem();
         }
-        if (ImGui::BeginTabItem("Entities"))
-        {
+
+        m_menu.drawEntityManagerMenu();
+
+        //if (ImGui::BeginTabItem("Entities"))
+        //{
+          
+            /*
             ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
             ImGuiWindowFlags window_flags = ImGuiWindowFlags_HorizontalScrollbar;
             ImGui::BeginChild("EntityList", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y), ImGuiChildFlags_None, window_flags);
@@ -888,13 +888,13 @@ void Scene_Play::sMenu()
                 ImGui::Text("%s", e->getComponent<CAnimation>().animation.getName().c_str());
                 ImGui::NextColumn();
             }
-            //for (int i = 0; i < 100; i++)
-            //    ImGui::Text("%04d: scrollable region", i);
+
             ImGui::EndChild();
             ImGui::PopStyleVar();
-
-            ImGui::EndTabItem();
-        }
+            */
+            //ImGui::EndTabItem();
+        //}
+        
         ImGui::EndTabBar();
     }
 

@@ -14,6 +14,7 @@ void TileMenu::loadTiles()
 
 void TileMenu::renderTileMenu(sf::RenderWindow &window)
 {
+	/*
 	size_t x = 0;
 	size_t y = 0;
 	for (auto& a : m_animations)
@@ -31,6 +32,7 @@ void TileMenu::renderTileMenu(sf::RenderWindow &window)
 			x = 0;
 		}
 	}
+	*/
 }
 
 TileMenu::TileMenu(Assets* assets)

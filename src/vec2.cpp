@@ -79,7 +79,7 @@ float Vec2::length() const
 
 Vec2 Vec2::normalize() const
 { 
-	float l = sqrt(x * x + y * y);
+	float l = (float)sqrt(x * x + y * y);
 
 	return Vec2(x / l, y / l);
 }
