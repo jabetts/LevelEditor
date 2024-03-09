@@ -2,7 +2,6 @@
 
 void GameEngine::init(const std::string& path)
 {
-
 	m_assets.loadFromFile(path);
 
 	m_window.create(sf::VideoMode(1920, 1080), "Level Editor");
@@ -11,16 +10,19 @@ void GameEngine::init(const std::string& path)
 	
 	// calling false as not wanting default fonts
 	ImGui::SFML::Init(m_window, false);
-	// Get the ImGui IO
-	auto &IO = ImGui::GetIO();
-	IO.Fonts->Clear();
-	// Load font for ImGui
-	IO.Fonts->AddFontFromFileTTF("assets/Mario.ttf", 20.f);
-	ImGui::SFML::UpdateFontTexture();
-	//ImGui::PushFont(IO.Fonts->Fonts[0]);
-	IO.FontGlobalScale = 1.0f;
-	ImGui::StyleColorsClassic();
 
+	auto &io = ImGui::GetIO();
+	io.Fonts->Clear();
+	io.FontGlobalScale = 1.0f;
+	io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
+	io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
+	// Load font for ImGui
+	io.Fonts->AddFontFromFileTTF("assets/Mario.ttf", 20.f);
+	ImGui::SFML::UpdateFontTexture();
+
+	//ImGui::PushFont(IO.Fonts->Fonts[0]);
+
+	ImGui::StyleColorsDark();
 	changeScene("play", std::make_shared<Scene_Play>(this, "level1.txt"), true);
 }
 

@@ -9,11 +9,17 @@
 #include "GameEngine.h"
 #include "tileMenu.h"
 
-//class GameEngine;
-
 typedef sf::Vector2f Vec2f;
 typedef sf::Vector2i Vec2i;
 typedef sf::Vector2u Vec2u;
+
+struct Flags
+{
+	bool drawTextures = true;
+	bool drawCollisions = false;
+	bool drawGrid = false;
+
+};
 
 class Scene_Play : public Scene
 {
@@ -42,7 +48,8 @@ protected:
 	MousePos                        m_mousePos;
 	Menu							m_menu;
 	TileMenu                        m_tileMenu;
-	bool							m_drawTextures = true;
+	Flags							m_flags;
+	//bool							m_drawTextures = true;
 	bool							m_drawCollision = false;
 	bool							m_drawGrid = false;
 	bool							m_collisions = true;

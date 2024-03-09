@@ -273,8 +273,8 @@ void Scene_Play::update()
         sAnimation();
         sDrag();
     }
-    m_currentFrame++;
     //sMenu();
+    m_currentFrame++;
     sRender();
 }
 
@@ -326,9 +326,9 @@ void Scene_Play::sDoAction(const Action& action)
     if (action.type() == "START")
     {
         // non game play actions
-        if (action.name() == "TOGGLE_TEXTURE") { m_drawTextures = !m_drawTextures; }
-        else if (action.name() == "TOGGLE_COLLISION") { m_drawCollision = !m_drawCollision; }
-        else if (action.name() == "TOGGLE_GRID") { m_drawGrid = !m_drawGrid; std::cout << "Grid " << (m_drawGrid ? "On\n" : "Off\n"); }
+        if (action.name() == "TOGGLE_TEXTURE") { m_flags.drawTextures = !m_flags.drawTextures; }
+        else if (action.name() == "TOGGLE_COLLISION") { m_flags.drawCollisions = !m_flags.drawCollisions; }
+        else if (action.name() == "TOGGLE_GRID") { m_flags.drawGrid = !m_flags.drawGrid; std::cout << "Grid " << (m_drawGrid ? "On\n" : "Off\n"); }
         else if (action.name() == "PAUSE") { setPaused(!m_paused); }
         else if (action.name() == "QUIT") { onEnd(); }
         else if (action.name() == "COLLISIONS") { m_collisions = !m_collisions; }
@@ -520,7 +520,7 @@ void Scene_Play::sRender()
     sf::RectangleShape selectRect;
     
     // draw all Entity textures / animations
-    if (m_drawTextures)
+    if (m_flags.drawTextures)
     {
         for (auto e : m_entityManager.getEntities())
         {
@@ -553,7 +553,7 @@ void Scene_Play::sRender()
     }
 
     // draw all Entity collision bounding boxes with a rectangle shape
-    if (m_drawCollision)
+    if (m_flags.drawCollisions)
     {
         for (auto e : m_entityManager.getEntities())
         {
@@ -574,7 +574,7 @@ void Scene_Play::sRender()
     }
 
     // draw the grid so that students can easily debug
-    if (m_drawGrid)
+    if (m_flags.drawGrid)
     {
         float leftX = m_game->window().getView().getCenter().x - width() / 2;
         float rightX = leftX + width() + m_gridSize.x;
@@ -625,11 +625,6 @@ void Scene_Play::sRender()
     // Static UI elements
     m_game->window().setView(ui);
     m_game->window().draw(m_debugText);
-    // draw tile menu
-    if (m_displayTileMenu)
-    {
-        //m_tileMenu.renderTileMenu(m_game->window());
-    }
 
     sMenu();
 
@@ -694,62 +689,17 @@ void Scene_Play::sMenu()
     ImGui::SFML::Update(m_game->window(), m_deltaClock.restart());
 
     ImGuiWindowFlags window_flags = 0;
-    bool show_window = true;
+    //bool show_window = false;
     int windowWidth = 550;
 
     ImGui::SetNextWindowSize(ImVec2((float)windowWidth, ImGui::GetIO().DisplaySize.y));
     ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - windowWidth, 0));
 
-    // Begin main window
+    // Begin main menu window
+    m_menu.drawMainMenu(this->m_flags);
 
-    ImGui::Begin("Level editor", &show_window, ImGuiWindowFlags_MenuBar);
-    ImGui::Text("Display");
-    ImGui::Checkbox("Grid", &m_drawGrid);
-    ImGui::SameLine();
-    ImGui::Checkbox("Collisions", &m_drawCollision);
-    ImGui::SameLine();
-    ImGui::Checkbox("Textures", &m_drawTextures);
-        
+
     ImVec2 windowSize = ImGui::GetWindowSize();
-
-    if (ImGui::BeginMenuBar())
-    {
-        if (ImGui::BeginMenu("File"))
-        {
-            if (ImGui::MenuItem("New"))
-            {
-
-            }
-            if (ImGui::MenuItem("Open"))
-            {
-
-            }
-            if (ImGui::BeginMenu("Open Recent"))
-            {
-                // TODO: Create open recent function which will
-                //       load a text file with last 5 levels opened
-                ImGui::MenuItem("Level1.txt");
-                ImGui::EndMenu();
-            }
-            ImGui::Separator();
-            if (ImGui::MenuItem("Save"))
-            {
-                saveLevel(filenameBuffer);
-                m_displaySaveWindow = false;
-            }
-            if (ImGui::MenuItem("Save as.."))
-            {
-                m_displaySaveWindow = true;
-            }
-            ImGui::Separator();
-            if (ImGui::MenuItem("Quit"))
-            {
-
-            }
-            ImGui::EndMenu();
-        }
-        ImGui::EndMenuBar();
-    }
 
     ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
     if (ImGui::BeginTabBar("MyTabBar", tab_bar_flags))
@@ -847,59 +797,13 @@ void Scene_Play::sMenu()
 
         m_menu.drawEntityManagerMenu();
 
-        //if (ImGui::BeginTabItem("Entities"))
-        //{
-          
-            /*
-            ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
-            ImGuiWindowFlags window_flags = ImGuiWindowFlags_HorizontalScrollbar;
-            ImGui::BeginChild("EntityList", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y), ImGuiChildFlags_None, window_flags);
-            
-            ImGui::Columns(5, "entitycolumns");
-            ImGui::SetColumnWidth(0, 100);
-            ImGui::SetColumnWidth(1, 50);
-            ImGui::SetColumnWidth(2, 100);
-            //ImGui::SetColumnWidth(3, 75);
-
-            ImGui::Separator();
-            ImGui::Text("Id"); ImGui::NextColumn();
-            ImGui::Text("D"); ImGui::NextColumn();
-            ImGui::Text("Pos"); ImGui::NextColumn();
-            ImGui::Text("Tag"); ImGui::NextColumn();
-            ImGui::Text("Name"); ImGui::NextColumn();
-            ImGui::Separator();
-
-            for (auto& e : m_entityManager.getEntities())
-            {
-                ImGui::Text("%04d", e->id());
-                ImGui::NextColumn();
-                if (ImGui::ImageButton("Entity##", e->getComponent<CAnimation>().animation.getSprite(), 
-                    sf::Vector2f(24,24), sf::Color::Transparent, sf::Color(255, 255, 255)))
-                {
-                    //e->destroy();
-                }
-                ImGui::NextColumn();
-                //Vec2 pos(e->getComponent<CTransform>().pos.x, e->getComponent<CTransform>().pos.y);
-                Vec2 pos = pixelToMidGrid(e->getComponent<CTransform>().pos.x, e->getComponent<CTransform>().pos.y, e);
-                ImGui::Text("%d %d", (int)pos.x, (int)pos.y);
-                ImGui::NextColumn();
-                ImGui::Text("%s", e->tag().c_str());
-                ImGui::NextColumn();
-                ImGui::Text("%s", e->getComponent<CAnimation>().animation.getName().c_str());
-                ImGui::NextColumn();
-            }
-
-            ImGui::EndChild();
-            ImGui::PopStyleVar();
-            */
-            //ImGui::EndTabItem();
-        //}
-        
         ImGui::EndTabBar();
     }
 
     if (m_displaySaveWindow)
     {
+        //m_menu.DrawStatusPopup();
+        
         if (ImGui::Begin("Save level"))
         {
             ImGui::InputText("##file name:", filenameBuffer, IM_ARRAYSIZE(filenameBuffer));
@@ -917,10 +821,6 @@ void Scene_Play::sMenu()
         }
         ImGui::End();
     }
-
-    // TODO: - Have an entity manager tab that shows all entities
-    //       - Have a tilemap tab that allows the user to select
-    //         a tile and place it anywhere on the map
 
     ImGui::End();
 

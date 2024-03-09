@@ -1,5 +1,6 @@
 #include "Menu.h"
 #include "GameEngine.h"
+#include "Scene_Play.h"
 
 // Returns the grid co-ordinate of a sprite origin.
 Vec2 Menu::pixelToMidGrid(float x, float y, std::shared_ptr<Entity> entity)
@@ -12,7 +13,7 @@ Vec2 Menu::pixelToMidGrid(float x, float y, std::shared_ptr<Entity> entity)
     return Vec2(std::floor(gridX), std::floor(gridY));
 }
 
-bool BeginCentered(const char* name) {
+bool Menu::BeginCentered(const char* name) {
     ImGuiIO const& io = ImGui::GetIO();
     ImVec2 pos(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f);
     ImGui::SetNextWindowPos(pos, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
@@ -30,6 +31,76 @@ void Menu::setEntityManager(EntityManager* entityManager)
 void Menu::setGameEngine(GameEngine* game)
 {
     m_game = game;
+}
+
+void Menu::drawMainMenu(struct Flags& flags)
+{
+    ImGui::Begin("Level editor", &m_showWindow, ImGuiWindowFlags_MenuBar);
+    ImGui::Text("Display");
+    ImGui::Checkbox("Grid", &flags.drawGrid);
+    ImGui::SameLine();
+    ImGui::Checkbox("Collisions", &flags.drawCollisions);
+    ImGui::SameLine();
+    ImGui::Checkbox("Textures", &flags.drawTextures);
+
+    drawMenuBar();
+}
+
+void Menu::onUpdate()
+{
+    ImGui::NewFrame();
+    //bool demoWindow = true;
+    //ImGui::ShowDemoWindow(&demoWindow);
+
+    ImGui::SFML::Update(m_game->window(), m_deltaClock.restart());
+    ImGui::Render();
+}
+
+void Menu::drawMenuBar()
+{
+    if (ImGui::BeginMenuBar())
+    {
+        if (ImGui::BeginMenu("File"))
+        {
+            if (ImGui::MenuItem("New"))
+            {
+    
+            }
+            if (ImGui::MenuItem("Open"))
+            {
+    
+            }
+            if (ImGui::BeginMenu("Open Recent"))
+            {
+                // TODO: Create open recent function which will
+                //       load a text file with last 5 levels opened
+                ImGui::MenuItem("Level1.txt");
+                ImGui::EndMenu();
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Save"))
+            {
+                //saveLevel(filenameBuffer);
+                //m_displaySaveWindow = false;
+            }
+            if (ImGui::MenuItem("Save as.."))
+            {
+                m_displaySaveWindow = true;
+                DrawStatusPopup();
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Quit"))
+            {
+    
+            }
+            ImGui::EndMenu();
+        }
+        ImGui::EndMenuBar();
+    }
+}
+
+void Menu::drawTabs()
+{
 }
 
 void Menu::renderMenu(sf::View view)
@@ -84,27 +155,30 @@ void Menu::drawEntityManagerMenu()
 #define ICON_MD_CONTENT_COPY "\xee\x85\x8d"	// U+e14d
 #define ICON_MD_COMPUTER "\xee\x8c\x8a"	// U+e30a
 
-void Menu::DrawStatusPopup() {
-    //if (!status_.ok()) {
-    //    show_status_ = true;
-    //    prev_status_ = status_;
-    //}
+void Menu::DrawStatusPopup()
+{
+    
+}
 
-    if (BeginCentered("StatusWindow")) {
-        //Text("%s", prev_status_.ToString().c_str());
-        ImGui::Spacing();
-        ImGui::NextColumn();
-        ImGui::Columns(1);
-        ImGui::Separator();
-        ImGui::NewLine();
-        ImGui::SameLine(270);
-        if (ImGui::Button("OK")) {
-            // change to false
+void Menu::drawSaveAsWindow()
+{
+    if (m_displaySaveWindow)
+    {
+        if (BeginCentered("Save As")) {
+            ImGui::Spacing();
+            ImGui::NextColumn();
+            ImGui::Columns(1);
+            ImGui::Separator();
+            ImGui::NewLine();
+            ImGui::SameLine(270);
+            if (ImGui::Button("OK")) {
+
+                m_displaySaveWindow = !m_displaySaveWindow;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button(ICON_MD_CONTENT_COPY, ImVec2(50, 0))) {
+            }
+            ImGui::End();
         }
-        ImGui::SameLine();
-        if (ImGui::Button(ICON_MD_CONTENT_COPY, ImVec2(50, 0))) {
-            //ImGui::SetClipboardText(prev_status_.ToString().c_str());
-        }
-        ImGui::End();
     }
 }
