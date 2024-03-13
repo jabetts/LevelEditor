@@ -9,10 +9,8 @@ class Assets
 {
 	std::map<std::string, sf::Texture>		m_textures;
 	std::map<std::string, Animation>        m_animations;
-	//std::map<std::string, sf::Sound>        m_sounds;
+	//std::map<std::string, sf::Sound>      m_sounds;
 	std::map<std::string, sf::Font>         m_fonts;
-
-	
 
 public:
 	Assets();
@@ -31,6 +29,5 @@ public:
 
 	void loadFromFile(std::string path);
 	std::map<std::string, Animation> getAnimationMap();
-
 };
 

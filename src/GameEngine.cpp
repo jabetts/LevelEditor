@@ -123,8 +123,8 @@ void GameEngine::changeScene(const std::string& sceneName, std::shared_ptr<Scene
 
 void GameEngine::quit()
 {
+	//ImGui::SFML::Shutdown(m_window);
 	m_running = false;
-	ImGui::SFML::Shutdown();
 	m_window.close();
 }
 

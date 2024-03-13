@@ -36,14 +36,62 @@ void Menu::setGameEngine(GameEngine* game)
 void Menu::drawMainMenu(struct Flags& flags)
 {
     ImGui::Begin("Level editor", &m_showWindow, ImGuiWindowFlags_MenuBar);
+    
+    drawMenuBar();
+    
     ImGui::Text("Display");
     ImGui::Checkbox("Grid", &flags.drawGrid);
     ImGui::SameLine();
     ImGui::Checkbox("Collisions", &flags.drawCollisions);
     ImGui::SameLine();
     ImGui::Checkbox("Textures", &flags.drawTextures);
+    ImGui::Separator();
 
-    drawMenuBar();
+
+}
+
+void Menu::drawFileMenu()
+{
+    if (ImGui::BeginMenu("File"))
+    {
+        if (ImGui::MenuItem("New"))
+        {
+
+        }
+        if (ImGui::MenuItem("Open"))
+        {
+
+        }
+        if (ImGui::BeginMenu("Open Recent"))
+        {
+            // TODO: Create open recent function which will
+            //       load a text file with last 5 levels opened
+            ImGui::MenuItem("Level1.txt");
+            ImGui::EndMenu();
+        }
+        ImGui::Separator();
+        if (ImGui::MenuItem("Save"))
+        {
+            //saveLevel(filenameBuffer);
+            //m_displaySaveWindow = false;
+        }
+        if (ImGui::MenuItem("Save as.."))
+        {
+            m_displaySaveWindow = true;
+            DrawStatusPopup();
+        }
+        ImGui::Separator();
+
+        if (ImGui::MenuItem("Quit"))
+        {
+            m_game->quit();
+        }
+        ImGui::EndMenu();
+    }
+}
+
+void Menu::drawEditMenu()
+{
 }
 
 void Menu::onUpdate()
@@ -58,49 +106,95 @@ void Menu::onUpdate()
 
 void Menu::drawMenuBar()
 {
+    // Menu bar items
     if (ImGui::BeginMenuBar())
     {
-        if (ImGui::BeginMenu("File"))
-        {
-            if (ImGui::MenuItem("New"))
-            {
-    
-            }
-            if (ImGui::MenuItem("Open"))
-            {
-    
-            }
-            if (ImGui::BeginMenu("Open Recent"))
-            {
-                // TODO: Create open recent function which will
-                //       load a text file with last 5 levels opened
-                ImGui::MenuItem("Level1.txt");
-                ImGui::EndMenu();
-            }
-            ImGui::Separator();
-            if (ImGui::MenuItem("Save"))
-            {
-                //saveLevel(filenameBuffer);
-                //m_displaySaveWindow = false;
-            }
-            if (ImGui::MenuItem("Save as.."))
-            {
-                m_displaySaveWindow = true;
-                DrawStatusPopup();
-            }
-            ImGui::Separator();
-            if (ImGui::MenuItem("Quit"))
-            {
-    
-            }
-            ImGui::EndMenu();
-        }
+        drawFileMenu();
+        drawEditMenu();
         ImGui::EndMenuBar();
     }
 }
 
+// TODO: Need to change the asset import spec so each texture has additional meta data
+//       so we can just loop through certain textures and use those to load every tile
+//       or sprite we want based on the type.
 void Menu::drawTabs()
 {
+    ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
+
+    if (ImGui::BeginTabBar("MyTabBar", tab_bar_flags))
+    {
+        if (ImGui::BeginTabItem("Tiles"))
+        {
+            const sf::Texture& brick = m_game->assets().getTexture("Brick");
+            const sf::Texture& ground = m_game->assets().getTexture("Ground");
+            const sf::Texture& block = m_game->assets().getTexture("Block");
+            const sf::Texture& basalt = m_game->assets().getTexture("Basalt");
+            const sf::Vector2f size(65.0f, 65.0f);
+
+            if (ImGui::ImageButton("Brick", brick, size, sf::Color::Transparent, sf::Color(255, 255, 255)))
+            {
+                auto t = m_entityManager->addEntity("Tile");
+                t->addComponent<CAnimation>(m_game->assets().getAnimation("Brick"), true);
+                t->addComponent<CBoundingBox>(m_game->assets().getAnimation("Brick").getSize());
+                //t->addComponent<CTransform>(gridToMidPixel((float)m_mousePos.gridPos.x, (float)m_mousePos.gridPos.y, t));
+                //t->addComponent<CDraggable>();
+                //t->getComponent<CDraggable>().dragging = true;
+            }
+            ImGui::SameLine();
+            if (ImGui::ImageButton("Ground", ground, size, sf::Color::Transparent, sf::Color(255, 255, 255)))
+            {
+                auto t = m_entityManager->addEntity("Tile");
+                t->addComponent<CAnimation>(m_game->assets().getAnimation("Ground"), true);
+                t->addComponent<CBoundingBox>(m_game->assets().getAnimation("Ground").getSize());
+                //t->addComponent<CTransform>(gridToMidPixel((float)m_mousePos.gridPos.x, (float)m_mousePos.gridPos.y, t));
+                //t->addComponent<CDraggable>();
+                //t->getComponent<CDraggable>().dragging = true;
+            }
+            ImGui::SameLine();
+            if (ImGui::ImageButton("Block", block, size, sf::Color::Transparent, sf::Color(255, 255, 255)))
+            {
+                auto t = m_entityManager->addEntity("Tile");
+                t->addComponent<CAnimation>(m_game->assets().getAnimation("Block"), true);
+                t->addComponent<CBoundingBox>(m_game->assets().getAnimation("Block").getSize());
+                //t->addComponent<CTransform>(gridToMidPixel((float)m_mousePos.gridPos.x, (float)m_mousePos.gridPos.y, t));
+                //t->addComponent<CDraggable>();
+                //t->getComponent<CDraggable>().dragging = true;
+            }
+            ImGui::SameLine();
+            if (ImGui::ImageButton("Basalt", m_game->assets().getAnimation("Basalt").getSprite(),
+                size, sf::Color::Transparent, sf::Color(255, 255, 255)))
+            {
+                auto t = m_entityManager->addEntity("Tile");
+                t->addComponent<CAnimation>(m_game->assets().getAnimation("Basalt"), true);
+                t->addComponent<CBoundingBox>(m_game->assets().getAnimation("basalt").getSize());
+                //t->addComponent<CTransform>(gridToMidPixel((float)m_mousePos.gridPos.x, (float)m_mousePos.gridPos.y, t));
+                //t->addComponent<CDraggable>();
+                //t->getComponent<CDraggable>().dragging = true;
+            }
+            ImGui::SameLine();
+            if (ImGui::ImageButton("QuestionFull", m_game->assets().getAnimation("QuestionFull").getSprite(),
+                size, sf::Color::Transparent, sf::Color(255, 255, 255)))
+            {
+                auto t = m_entityManager->addEntity("Tile");
+                t->addComponent<CAnimation>(m_game->assets().getAnimation("QuestionFull"), true);
+                t->addComponent<CBoundingBox>(m_game->assets().getAnimation("QuestionFull").getSize());
+                //t->addComponent<CTransform>(gridToMidPixel((float)m_mousePos.gridPos.x, (float)m_mousePos.gridPos.y, t));
+                //t->addComponent<CDraggable>();
+                //t->getComponent<CDraggable>().dragging = true;
+            }
+
+            ImGui::EndTabItem();
+        }
+        if (ImGui::BeginTabItem("Decorations"))
+        {
+            ImGui::EndTabItem();
+        }
+
+        drawEntityManagerMenu();
+
+        ImGui::EndTabBar();
+    }
 }
 
 void Menu::renderMenu(sf::View view)

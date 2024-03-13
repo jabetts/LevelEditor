@@ -7,7 +7,6 @@
 
 class GameEngine;
 
-
 class Menu
 {
 	GameEngine*					m_game      = nullptr;
@@ -15,8 +14,7 @@ class Menu
 	bool						m_displaySaveWindow = false;
 	bool						m_showWindow = false;
 	sf::Clock					m_deltaClock;
-
-
+	bool						m_edits = false; // This flag sets if we need to show save as on exit
 
 private:
 	Vec2 pixelToMidGrid(float x, float y, std::shared_ptr<Entity> entity);
@@ -24,6 +22,8 @@ private:
 	void drawSaveAsWindow();
 	void drawMenuBar();
 	void drawTabs();
+	void drawFileMenu();
+	void drawEditMenu();
 	
 public:
 	Menu() {}
