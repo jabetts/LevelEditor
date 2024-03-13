@@ -33,11 +33,14 @@ void Menu::setGameEngine(GameEngine* game)
     m_game = game;
 }
 
-void Menu::drawMainMenu(struct Flags& flags)
+void Menu::setScene(Scene_Play* scene)
+{
+    m_scene = scene;
+}
+
+void Menu::drawMainMenu(Flags& flags)
 {
     ImGui::Begin("Level editor", &m_showWindow, ImGuiWindowFlags_MenuBar);
-    
-    drawMenuBar();
     
     ImGui::Text("Display");
     ImGui::Checkbox("Grid", &flags.drawGrid);
@@ -47,7 +50,9 @@ void Menu::drawMainMenu(struct Flags& flags)
     ImGui::Checkbox("Textures", &flags.drawTextures);
     ImGui::Separator();
 
-
+    drawMenuBar();
+   
+    //drawTabs();
 }
 
 void Menu::drawFileMenu()
@@ -72,7 +77,7 @@ void Menu::drawFileMenu()
         ImGui::Separator();
         if (ImGui::MenuItem("Save"))
         {
-            //saveLevel(filenameBuffer);
+            m_scene->saveLevel(m_scene->filenameBuffer);
             //m_displaySaveWindow = false;
         }
         if (ImGui::MenuItem("Save as.."))
@@ -117,79 +122,63 @@ void Menu::drawMenuBar()
 
 // TODO: Need to change the asset import spec so each texture has additional meta data
 //       so we can just loop through certain textures and use those to load every tile
-//       or sprite we want based on the type.
+//       or sprite we want based on the type. i.e. Dec_ prefix
 void Menu::drawTabs()
 {
     ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
 
     if (ImGui::BeginTabBar("MyTabBar", tab_bar_flags))
     {
+        auto tiles = m_game->assets().getAnimationMap();
+
         if (ImGui::BeginTabItem("Tiles"))
         {
-            const sf::Texture& brick = m_game->assets().getTexture("Brick");
-            const sf::Texture& ground = m_game->assets().getTexture("Ground");
-            const sf::Texture& block = m_game->assets().getTexture("Block");
-            const sf::Texture& basalt = m_game->assets().getTexture("Basalt");
-            const sf::Vector2f size(65.0f, 65.0f);
+            //Manual button wrapping
+            ImGuiStyle& style = ImGui::GetStyle();
+            int buttons_count = tiles.size();
+            float window_visible_x2 = ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x;
+            int n = 0;
 
-            if (ImGui::ImageButton("Brick", brick, size, sf::Color::Transparent, sf::Color(255, 255, 255)))
+            for (const auto& [name, animation] : tiles)
             {
-                auto t = m_entityManager->addEntity("Tile");
-                t->addComponent<CAnimation>(m_game->assets().getAnimation("Brick"), true);
-                t->addComponent<CBoundingBox>(m_game->assets().getAnimation("Brick").getSize());
-                //t->addComponent<CTransform>(gridToMidPixel((float)m_mousePos.gridPos.x, (float)m_mousePos.gridPos.y, t));
-                //t->addComponent<CDraggable>();
-                //t->getComponent<CDraggable>().dragging = true;
-            }
-            ImGui::SameLine();
-            if (ImGui::ImageButton("Ground", ground, size, sf::Color::Transparent, sf::Color(255, 255, 255)))
-            {
-                auto t = m_entityManager->addEntity("Tile");
-                t->addComponent<CAnimation>(m_game->assets().getAnimation("Ground"), true);
-                t->addComponent<CBoundingBox>(m_game->assets().getAnimation("Ground").getSize());
-                //t->addComponent<CTransform>(gridToMidPixel((float)m_mousePos.gridPos.x, (float)m_mousePos.gridPos.y, t));
-                //t->addComponent<CDraggable>();
-                //t->getComponent<CDraggable>().dragging = true;
-            }
-            ImGui::SameLine();
-            if (ImGui::ImageButton("Block", block, size, sf::Color::Transparent, sf::Color(255, 255, 255)))
-            {
-                auto t = m_entityManager->addEntity("Tile");
-                t->addComponent<CAnimation>(m_game->assets().getAnimation("Block"), true);
-                t->addComponent<CBoundingBox>(m_game->assets().getAnimation("Block").getSize());
-                //t->addComponent<CTransform>(gridToMidPixel((float)m_mousePos.gridPos.x, (float)m_mousePos.gridPos.y, t));
-                //t->addComponent<CDraggable>();
-                //t->getComponent<CDraggable>().dragging = true;
-            }
-            ImGui::SameLine();
-            if (ImGui::ImageButton("Basalt", m_game->assets().getAnimation("Basalt").getSprite(),
-                size, sf::Color::Transparent, sf::Color(255, 255, 255)))
-            {
-                auto t = m_entityManager->addEntity("Tile");
-                t->addComponent<CAnimation>(m_game->assets().getAnimation("Basalt"), true);
-                t->addComponent<CBoundingBox>(m_game->assets().getAnimation("basalt").getSize());
-                //t->addComponent<CTransform>(gridToMidPixel((float)m_mousePos.gridPos.x, (float)m_mousePos.gridPos.y, t));
-                //t->addComponent<CDraggable>();
-                //t->getComponent<CDraggable>().dragging = true;
-            }
-            ImGui::SameLine();
-            if (ImGui::ImageButton("QuestionFull", m_game->assets().getAnimation("QuestionFull").getSprite(),
-                size, sf::Color::Transparent, sf::Color(255, 255, 255)))
-            {
-                auto t = m_entityManager->addEntity("Tile");
-                t->addComponent<CAnimation>(m_game->assets().getAnimation("QuestionFull"), true);
-                t->addComponent<CBoundingBox>(m_game->assets().getAnimation("QuestionFull").getSize());
-                //t->addComponent<CTransform>(gridToMidPixel((float)m_mousePos.gridPos.x, (float)m_mousePos.gridPos.y, t));
-                //t->addComponent<CDraggable>();
-                //t->getComponent<CDraggable>().dragging = true;
+                Animation anim = animation;
+
+                if (std::strncmp(name.c_str(), "Dec", 3) == 0)
+                {
+                    continue;
+                }
+
+                sf::Texture& tex = m_game->assets().getTexture(name);
+                Vec2 size = anim.getSize();
+
+                if (ImGui::ImageButton(anim.getName().c_str(), anim.getSprite(), sf::Vector2f(size.x, size.y), sf::Color::Transparent,
+                    sf::Color(255, 255, 255, 255)))
+                {
+                    //auto t = m_entityManager.addEntity("Tile");
+                    //std::cout << name << " pressed\n";
+                    //t->addComponent<CAnimation>(anim, true);
+                    //t->addComponent<CBoundingBox>(anim.getSize());
+                    //t->addComponent<CTransform>(gridToMidPixel((float)m_mousePos.gridPos.x, (float)m_mousePos.gridPos.y, t));
+                    //t->addComponent<CDraggable>();
+                    //t->getComponent<CDraggable>().dragging = true;
+                }
+
+                float last_button_x2 = ImGui::GetItemRectMax().x;
+                float next_button_x2 = last_button_x2 + style.ItemSpacing.x + size.x; // Expected position if next button was on same line
+                if (n + 1 < buttons_count && next_button_x2 < window_visible_x2)
+                {
+                    ImGui::SameLine();
+                }
+
+                n++;
             }
 
             ImGui::EndTabItem();
         }
-        if (ImGui::BeginTabItem("Decorations"))
-        {
-            ImGui::EndTabItem();
-        }
+        //if (ImGui::BeginTabItem("Decorations"))
+        //{
+        //    ImGui::EndTabItem();
+        //}
 
         drawEntityManagerMenu();
 
@@ -212,7 +201,6 @@ void Menu::drawEntityManagerMenu()
         ImGui::SetColumnWidth(0, 100);
         ImGui::SetColumnWidth(1, 50);
         ImGui::SetColumnWidth(2, 100);
-        //ImGui::SetColumnWidth(3, 75);
 
         ImGui::Separator();
         ImGui::Text("Id"); ImGui::NextColumn();
@@ -225,11 +213,13 @@ void Menu::drawEntityManagerMenu()
         for (auto& e : m_entityManager->getEntities())
         {
             ImGui::Text("%04d", e->id());
+            char idtext[32];
+            std::snprintf(idtext, sizeof(idtext), "%d", e->id());
             ImGui::NextColumn();
-            if (ImGui::ImageButton("Entity##", e->getComponent<CAnimation>().animation.getSprite(),
+            if (ImGui::ImageButton(idtext, e->getComponent<CAnimation>().animation.getSprite(),
                 sf::Vector2f(24, 24), sf::Color::Transparent, sf::Color(255, 255, 255)))
             {
-                //TODO: edit box for entity properties
+                e->destroy();
             }
             ImGui::NextColumn();
             Vec2 pos = pixelToMidGrid(e->getComponent<CTransform>().pos.x, e->getComponent<CTransform>().pos.y, e);

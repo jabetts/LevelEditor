@@ -17,13 +17,11 @@ void GameEngine::init(const std::string& path)
 	io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
 	io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
 	// Load font for ImGui
-	io.Fonts->AddFontFromFileTTF("assets/Mario.ttf", 20.f);
+	io.Fonts->AddFontFromFileTTF("assets/Hack.ttf", 20.f);
 	ImGui::SFML::UpdateFontTexture();
 
-	//ImGui::PushFont(IO.Fonts->Fonts[0]);
-
 	ImGui::StyleColorsDark();
-	changeScene("play", std::make_shared<Scene_Play>(this, "level1.txt"), true);
+	changeScene("play", std::make_shared<Scene_Play>(this, "out.txt"), true);
 }
 
 void GameEngine::update()

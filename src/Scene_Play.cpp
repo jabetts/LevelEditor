@@ -81,6 +81,7 @@ void Scene_Play::init(const std::string& levelPath)
     m_deltaClock.restart();
 
     m_menu = Menu(m_game, &m_entityManager);
+    m_menu.setScene(this);
 
     loadLevel(levelPath);
 
@@ -158,6 +159,7 @@ void Scene_Play::loadLevel(const std::string& filename)
             auto t = m_entityManager.addEntity("Dec");
             t->addComponent<CAnimation>(m_game->assets().getAnimation(text), true);
             t->addComponent<CTransform>(gridToMidPixel(X, Y, t));
+            t->addComponent<CDraggable>();
 
         }
         // TODO: for the level editor, this will just be for for players starting position
@@ -327,15 +329,15 @@ void Scene_Play::sDoAction(const Action& action)
     if (action.type() == "START")
     {
         // non game play actions
-        if (action.name() == "TOGGLE_TEXTURE") { m_flags.drawTextures = !m_flags.drawTextures; }
-        else if (action.name() == "TOGGLE_COLLISION") { m_flags.drawCollisions = !m_flags.drawCollisions; }
-        else if (action.name() == "TOGGLE_GRID") { m_flags.drawGrid = !m_flags.drawGrid; std::cout << "Grid " << (m_drawGrid ? "On\n" : "Off\n"); }
-        else if (action.name() == "PAUSE") { setPaused(!m_paused); }
-        else if (action.name() == "QUIT") { onEnd(); }
-        else if (action.name() == "COLLISIONS") { m_collisions = !m_collisions; }
-        else if (action.name() == "DEBUG") { m_debugFlag = !m_debugFlag; }
-        else if (action.name() == "SAVE") { saveLevel("level2.txt"); }
-        else if (action.name() == "TILE_MENU") { m_displayTileMenu = !m_displayTileMenu; }
+        if (action.name() == "TOGGLE_TEXTURE")          { m_flags.drawTextures = !m_flags.drawTextures; }
+        else if (action.name() == "TOGGLE_COLLISION")   { m_flags.drawCollisions = !m_flags.drawCollisions; }
+        else if (action.name() == "TOGGLE_GRID")        { m_flags.drawGrid = !m_flags.drawGrid; std::cout << "Grid " << (m_drawGrid ? "On\n" : "Off\n"); }
+        else if (action.name() == "PAUSE")              { setPaused(!m_paused); }
+        else if (action.name() == "QUIT")               { onEnd(); }
+        else if (action.name() == "COLLISIONS")         { m_collisions = !m_collisions; }
+        else if (action.name() == "DEBUG")              { m_debugFlag = !m_debugFlag; }
+        else if (action.name() == "SAVE")               { saveLevel("level2.txt"); }
+        else if (action.name() == "TILE_MENU")          { m_displayTileMenu = !m_displayTileMenu; }
         
         // movement keys - basic movement and mouse acceleration if mouse with 100 pixels of each side of
         // the window. TODO: make the mouse position a percantage rather than hard coded pixels
@@ -442,7 +444,7 @@ void Scene_Play::sDoAction(const Action& action)
             m_debugText.setCharacterSize(20);
             m_debugText.setFillColor(sf::Color::White);
             m_debugText.setOutlineColor(sf::Color::Black);
-            m_debugText.setFont(m_game->assets().getFont("Mario"));
+            m_debugText.setFont(m_game->assets().getFont("Hack"));
             std::stringstream ss;
 
             ss << "Window pos: " << m_mousePos.winPos.x << " " << m_mousePos.winPos.y << "\n"
@@ -636,6 +638,7 @@ void Scene_Play::sRender()
 
 void Scene_Play::sDebug()
 {
+
 }
 
 void Scene_Play::sDrag()
@@ -710,10 +713,10 @@ void Scene_Play::sMenu()
         ImGuiIO& io = ImGui::GetIO();
         ImTextureID my_tex_id = io.Fonts->TexID;
 
+        
+        
         if (ImGui::BeginTabItem("Tiles"))
         {
-            
-
             //Manual button wrapping
             ImGuiStyle& style = ImGui::GetStyle();
             int buttons_count = tiles.size();
@@ -743,6 +746,10 @@ void Scene_Play::sMenu()
                     t->addComponent<CDraggable>();
                     t->getComponent<CDraggable>().dragging = true;
                 }
+                if (ImGui::IsItemHovered())
+                {
+                    ImGui::SetTooltip(name.c_str());
+                }
 
                 float last_button_x2 = ImGui::GetItemRectMax().x;
                 float next_button_x2 = last_button_x2 + style.ItemSpacing.x + size.x; // Expected position if next button was on same line
@@ -759,7 +766,47 @@ void Scene_Play::sMenu()
         
         if (ImGui::BeginTabItem("Decorations"))
         {
+            //Manual button wrapping
+            ImGuiStyle& style = ImGui::GetStyle();
+            int buttons_count = tiles.size();
+            float window_visible_x2 = ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x;
+            int n = 0;
 
+            for (const auto& [name, animation] : tiles)
+            {
+                Animation anim = animation;
+
+                if (std::strncmp(name.c_str(), "Dec", 3) == 0)
+                {
+                    sf::Texture& tex = m_game->assets().getTexture(name);
+                    Vec2 size = anim.getSize();
+
+                    if (ImGui::ImageButton(anim.getName().c_str(), anim.getSprite(), sf::Vector2f(size.x, size.y), sf::Color::Transparent,
+                        sf::Color(255, 255, 255, 255)))
+                    {
+                        auto t = m_entityManager.addEntity("Dec");
+                        std::cout << name << " pressed\n";
+                        t->addComponent<CAnimation>(m_game->assets().getAnimation(name), true);
+                        t->addComponent<CTransform>(gridToMidPixel((float)m_mousePos.gridPos.x, (float)m_mousePos.gridPos.y, t));
+                        t->addComponent<CDraggable>();
+                        t->getComponent<CDraggable>().dragging = true;
+                    }
+
+                    if (ImGui::IsItemHovered())
+                    {
+                        ImGui::SetTooltip(name.c_str());
+                    }
+
+                    float last_button_x2 = ImGui::GetItemRectMax().x;
+                    float next_button_x2 = last_button_x2 + style.ItemSpacing.x + size.x; // Expected position if next button was on same line
+                    if (n + 1 < buttons_count && next_button_x2 < window_visible_x2)
+                    {
+                        ImGui::SameLine();
+                    }
+
+                    n++;
+                }  
+            }
 
             ImGui::EndTabItem();
         }

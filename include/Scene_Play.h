@@ -69,12 +69,12 @@ protected:
 	sf::CircleShape					m_shape;
 	sf::View						m_view;
 	sf::Clock						m_deltaClock;
-	char                            filenameBuffer[255] = "out.txt";
+	
 	
 	void init(const std::string& levelPath);
 	void loadLevel(const std::string& filename);
 	void loadLevel(int i);
-	void saveLevel(const std::string& filename);
+	
 	void resetLevel();
 
 	void sAnimation();
@@ -99,10 +99,14 @@ protected:
 	float height() const;
 
 public:
+	char                            filenameBuffer[255] = "out.txt";
+
+
 	Scene_Play(GameEngine* gameEngine, const std::string& levelPath);
 	void update();
 	void onEnd();
 	void sDoAction(const Action& action);
 	void sRender();
+	void saveLevel(const std::string& filename);
 };
 

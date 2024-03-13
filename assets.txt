@@ -23,6 +23,7 @@ Texture DecCoin assets/DecCoin.png
 Texture GoombaAlive assets/GoombaAlive.png
 Font Hack assets/hack.ttf
 Font Mario assets/mario.ttf
+Font EnterComm assets/EnterCommand.ttf
 Animation MegamanStand MegamanStand 3 60
 Animation MegamanRun MegamanRun 3 8
 Animation MegamanJump MegamanJump 1 0

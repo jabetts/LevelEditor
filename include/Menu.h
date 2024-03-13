@@ -6,11 +6,13 @@
 #include "Animation.h"
 
 class GameEngine;
+class Scene_Play;
 
 class Menu
 {
 	GameEngine*					m_game      = nullptr;
 	EntityManager*				m_entityManager = nullptr;
+	Scene_Play*					m_scene = nullptr;
 	bool						m_displaySaveWindow = false;
 	bool						m_showWindow = false;
 	sf::Clock					m_deltaClock;
@@ -30,13 +32,13 @@ public:
 	Menu(GameEngine *game, EntityManager *entityManager)
 	: m_game(game), m_entityManager(entityManager) {}
 	void renderMenu(sf::View view);
-	void setIconOffset(int iconOffset);
 	//void setFont(sf::Font font);
 	void setEntityManager(EntityManager* entityManager);
 	void setGameEngine(GameEngine* game);
+	void setScene(Scene_Play* scene);
 	void DrawStatusPopup();
 	void drawEntityManagerMenu();
 	void onUpdate();
-	void drawMainMenu(struct Flags &flags);
+	void drawMainMenu(struct Flags& flags);
 };
 
